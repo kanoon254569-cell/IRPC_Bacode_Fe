@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Q-TRACK-FORKLIFT</title>
+  <!-- ค่า default สำหรับ local dev (ng serve) -> ตอน build production จะถูกเขียนทับเป็น /app-forklift/ ให้เองอัตโนมัติ
+       ผ่าน baseHref ใน angular.json (configurations.production) ไม่ต้องมาคอยสลับ comment มือเองอีกต่อไป -->
+  <base href="/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <link rel="icon" type="image/png" href="assets/images/forklift-1.png" />
+  <!-- ฟอนต์ Roboto / Material Icons ย้ายไปรวมใน bundle styles (angular.json -> styles) แล้ว
+       ให้ Service Worker cache ไว้ เปิดแอปได้แม้ offline ไม่ต้องวิ่งไปขอ CSS จาก server ทุกครั้งก่อนวาดหน้า -->
+  <link rel="manifest" href="manifest.webmanifest" />
+</head>
+
+<body>
+  <app-root></app-root>
+  <noscript>Please enable JavaScript to continue using this application.</noscript>
+</body>
+
+</html>

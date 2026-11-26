@@ -1,0 +1,231 @@
+:root {
+  --custom-global-font: Arial, Helvetica, sans-serif;
+  --bs-font-sans-serif: var(--custom-global-font);
+  --bs-body-font-family: var(--custom-global-font);
+  --mdc-typography-font-family: var(--custom-global-font) !important;
+  --mat-sys-body-large-font: var(--custom-global-font) !important;
+  --mat-sys-label-large-font: var(--custom-global-font) !important;
+  --mat-sys-title-large-font: var(--custom-global-font) !important;
+  --mat-sys-headline-large-font: var(--custom-global-font) !important;
+}
+
+html, body {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+input, textarea {
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+
+/* Nuclear override for ALL elements */
+* {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+mat-icon,
+.mat-icon,
+.material-icons,
+i {
+  font-family: 'Material Icons' !important;
+}
+
+:root {
+  --bs-primary: #232d73 !important;
+  --bs-primary-rgb: 35, 45, 115;
+
+  --bs-info: #009fe3;
+  --bs-info-rgb: 0, 159, 227;
+
+  --bs-danger: #d01c1c;
+  --bs-danger-rgb: 208, 28, 28;
+
+  --bs-link-color: #232d73;
+  --bs-link-hover-color: #192156;
+}
+
+/*
+   SweetAlert ต้องขึ้นทับ Angular Material Dialog (CDK overlay z-index: 1000) เสมอ
+   ไม่งั้นตอนเปิดจากใน mat-dialog (เช่น modal สแกน forklift) จะไปโผล่ใต้ backdrop ของ dialog แทน
+*/
+html body div.swal2-container {
+  z-index: 99999 !important;
+}
+
+/*
+   SweetAlert ยืนยัน Reject / Remove หน้า Pallet Management (customClass.popup = 'pm-swal-wide')
+   กว้าง 75% ของจอเท่ากับ modal Edit / Replace + ตัวอักษร/ช่องกรอก/ปุ่มใหญ่ กดง่ายบน Tablet
+   (Swal render ที่ body นอก component -> ต้องอยู่ใน global styles ไม่ใช่ pallet-management.css)
+*/
+.swal2-popup.pm-swal-wide {
+  width: 75vw !important;
+  max-width: 75vw;
+  padding: 32px 40px 36px;
+  border-radius: 12px;
+}
+
+.swal2-popup.pm-swal-wide .swal2-title {
+  font-size: 1.9rem;
+}
+
+.swal2-popup.pm-swal-wide .swal2-html-container {
+  font-size: 1.3rem;
+  line-height: 1.7;
+}
+
+.swal2-popup.pm-swal-wide .swal2-input-label {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #5a5a5a;
+}
+
+.swal2-popup.pm-swal-wide .swal2-input {
+  width: calc(100% - 16px);
+  max-width: none;
+  height: 60px;
+  margin: 8px 8px 0;
+  font-size: 1.3rem;
+  border-radius: 10px;
+}
+
+.swal2-popup.pm-swal-wide .swal2-actions {
+  width: 100%;
+  gap: 16px;
+  margin-top: 28px;
+  flex-wrap: nowrap;
+}
+
+.swal2-popup.pm-swal-wide .swal2-actions button {
+  flex: 1;
+  min-height: 60px;
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+@media (max-width: 600px) {
+  .swal2-popup.pm-swal-wide {
+    width: 95vw !important;
+    max-width: 95vw;
+    padding: 24px 20px 28px;
+  }
+}
+
+/*
+   SweetAlert ยืนยันลบ Pallet หน้า scan-pallet (customClass.popup = 'scan-pallet-delete-confirm')
+   เฉพาะ title/text ยังขยายแยกเฉพาะ modal นี้ ส่วนปุ่ม (ขนาด/font) ย้ายไปเป็น global ด้านล่างแล้ว ใช้ร่วมกับ Swal ทุกจุด
+*/
+.swal2-popup.scan-pallet-delete-confirm .swal2-title {
+  font-size: 1.6rem;
+}
+
+.swal2-popup.scan-pallet-delete-confirm .swal2-html-container {
+  font-size: 1.15rem;
+}
+
+/*
+   ข้อความเนื้อหา (text/html) ของ SweetAlert ทุกจุดในแอป (ไม่ผูก customClass) -> ขยายให้เท่า title (1.875em ค่า
+   default ของ SweetAlert2) กันข้อความ error/warning/success แบบ text ธรรมดาเล็กกว่าหัวจนไม่สมดุล/อ่านยาก
+   specificity น้อยกว่า .pm-swal-wide/.scan-pallet-delete-confirm ที่มี custom sizing ของตัวเองอยู่แล้ว เลยไม่ทับกัน
+*/
+.swal2-popup .swal2-html-container {
+  font-size: 1.875em;
+}
+
+/*
+   ความกว้าง popup ของ SweetAlert ทุกจุด (ไม่ผูก customClass) -> ขยายจาก default ~32em เดิม กันข้อความที่ตัวใหญ่ขึ้น
+   (ตาม .swal2-html-container ด้านบน) แล้วขึ้นบรรทัดถี่/ดูอึดอัดเกิน ใช้ vw + max-width กันล้นจอเล็ก
+*/
+.swal2-popup {
+  width: 90vw !important;
+  max-width: 650px;
+}
+
+/*  modal รายการคิวค้างซิงค์ (header.component.ts) ต้องกว้างกว่า default มาก (ตารางสรุป + list รายตัว + ปุ่มลบ)
+    ต้องชนด้วย 2 class (.swal2-popup.queue-list-popup) ถึงจะ specificity พอทับ .swal2-popup ทั่วไปด้านบนได้ */
+.swal2-popup.queue-list-popup {
+  width: 950px !important;
+  max-width: 95vw !important;
+}
+
+/*  modal อธิบาย Tag งาน (job-accept.ts) เหตุผลเดียวกับ .queue-list-popup ด้านบน -> ต้องชน 2 class ถึงทับ max-width:650px ได้ */
+.swal2-popup.tag-info-popup {
+  width: 800px !important;
+  max-width: 95vw !important;
+}
+
+/*
+   ปุ่ม Confirm/Cancel ของ SweetAlert ทุกจุดในแอป (ไม่ผูก customClass เฉพาะ) -> ใหญ่ขึ้น กดง่ายบน Tablet เหมือนกันหมด
+   specificity น้อยกว่า .pm-swal-wide ที่มี custom sizing ของตัวเองอยู่แล้ว (เช่น pallet-management) เลยไม่ทับกัน
+   ค่าที่ใช้เท่ากับที่จูนไว้ตอนแรกใน modal ยืนยันลบ Pallet ของ scan-pallet
+*/
+.swal2-popup .swal2-actions {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 16px;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.swal2-popup .swal2-actions button {
+  flex: 1;
+  min-height: 56px;
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+/*
+   driver.js (tour หน้า job-accept) ตัวหนังสือ/ปุ่ม default เล็กเกินสำหรับจอ Tablet -> ขยายให้โทนเดียวกับปุ่ม
+   SweetAlert ทั่วแอป (ดู .swal2-popup .swal2-actions button ด้านบน) ชน selector เดียวกับ driver.css เป๊ะ (equal
+   specificity, driver.css โหลดมาก่อนใน angular.json -> ของตรงนี้ชนะเองได้อยู่แล้ว ใส่ !important กันเผื่อ build
+   future เปลี่ยนลำดับ)
+*/
+.driver-popover {
+  max-width: 420px !important;
+  padding: 20px !important;
+}
+
+.driver-popover-title {
+  font-size: 26px !important;
+}
+
+.driver-popover-description {
+  font-size: 18px !important;
+  line-height: 1.5 !important;
+}
+
+.driver-popover-progress-text {
+  font-size: 15px !important;
+}
+
+.driver-popover-footer-btn {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  padding: 12px 22px !important;
+  border-radius: 10px !important;
+  min-height: 48px !important;
+}
+
+/*  ปุ่ม "ถัดไป/เสร็จสิ้น" เด่นเป็น primary (ฟ้าเข้ม) แยกจาก "ย้อนกลับ/ปิด" ที่เป็น secondary (ขาว/เทา) */
+.driver-popover-next-btn {
+  background-color: #2454d4 !important;
+  color: #fff !important;
+  border-color: #2454d4 !important;
+}
+
+/*  ปุ่ม "x" มุมขวาบน default เล็กมาก (32x28, font 18px) แตะยากบน Tablet -> ขยายเหมือนปุ่มอื่นในกลุ่มนี้ */
+.driver-popover-close-btn {
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 28px !important;
+  color: #888 !important;
+}

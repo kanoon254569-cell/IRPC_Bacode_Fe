@@ -1,0 +1,241 @@
+.new-job-badge-container {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.new-job-badge-button {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #232d73;
+    color: #fff;
+    border: none;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.new-job-badge-button:active {
+    transform: scale(0.96);
+}
+
+.new-job-badge-button mat-icon {
+    font-size: 38px;
+    width: 38px;
+    height: 38px;
+}
+
+/*  วงแหวน pulse ขยายจางออกวนตลอดเวลาที่ปุ่มโชว์อยู่ (มีงานใหม่ค้างอยู่) -> สังเกตได้ง่ายแม้ไม่ได้มองจอจังหวะที่เพิ่งขึ้นมาพอดี */
+.new-job-badge-pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid #232d73;
+    animation: new-job-badge-pulse 1.8s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes new-job-badge-pulse {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+/*  ตัวกระดิ่งแกว่งเบาๆ เหมือนกำลังสั่น ย้ำว่ามีอะไรใหม่ -> เล่นวนตลอดเช่นกัน (ปุ่มนี้โชว์เฉพาะตอนมีงานที่ยังไม่ได้ดูอยู่แล้ว) */
+.new-job-badge-bell-icon {
+    animation: new-job-badge-ring 2.2s ease-in-out infinite;
+    transform-origin: top center;
+}
+
+@keyframes new-job-badge-ring {
+    0%, 65%, 100% { transform: rotate(0deg); }
+    68% { transform: rotate(-14deg); }
+    71% { transform: rotate(12deg); }
+    74% { transform: rotate(-9deg); }
+    77% { transform: rotate(6deg); }
+    80% { transform: rotate(-3deg); }
+    83% { transform: rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .new-job-badge-pulse-ring,
+    .new-job-badge-bell-icon {
+        animation: none;
+    }
+}
+
+.new-job-badge-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: #d01c1c;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border: 2px solid #fff;
+}
+
+.new-job-badge-panel {
+    width: 440px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.new-job-badge-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid #eee;
+    font-weight: 700;
+    font-size: 19px;
+    color: #232d73;
+    flex-shrink: 0;
+}
+
+.new-job-badge-panel-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.new-job-badge-panel-date {
+    font-size: 15px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.new-job-badge-clear-all {
+    background: #1c5fd4;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 14px;
+    flex-shrink: 0;
+}
+
+.new-job-badge-clear-all:active {
+    transform: scale(0.96);
+}
+
+/*  ความสูงพอดี ~4 รายการ (ของแบบไม่ urgent ~71px/รายการ) เกินกว่านั้นให้ scroll แทนที่จะยืดยาวไม่จำกัด */
+.new-job-badge-list {
+    overflow-y: auto;
+    max-height: 290px;
+}
+
+.new-job-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.new-job-badge-item:last-child {
+    border-bottom: none;
+}
+
+/*  งานด่วน (is_urgent = 'Y') -> ขอบแดงกระพริบ สีเดียวกับ .job-card.urgent หน้า job-accept เป๊ะ (คัดลอก keyframe มา
+    เพราะ Angular แยก style encapsulation ต่อ component ใช้ keyframe ของ job-accept ข้ามไฟล์ไม่ได้) */
+.new-job-badge-item.urgent {
+    margin: 6px 10px;
+    border: 3px solid #ff0000;
+    border-radius: 10px;
+    animation: new-job-badge-urgent-pulse 1s ease-in-out infinite;
+}
+
+@keyframes new-job-badge-urgent-pulse {
+    0%, 100% {
+        border-color: #ff0000;
+        box-shadow: rgba(255, 61, 2, 0.5) 0px 8px 24px;
+    }
+    50% {
+        border-color: #fff;
+        box-shadow: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .new-job-badge-item.urgent {
+        animation: none;
+    }
+}
+
+/*  สีเดียวกับ .job-tag/.tag-* หน้า job-accept เป๊ะ (scope แยกกันเพราะ Angular component style แยก encapsulation กันเอง) */
+.new-job-badge-tag {
+    flex-shrink: 0;
+    color: #fff;
+    font-weight: 700;
+    padding: 4px 11px;
+    text-align: center;
+    font-size: 19px;
+}
+
+.new-job-badge-tag.tag-in { background: #14a318; }
+.new-job-badge-tag.tag-out { background: #f8c538; color: #000; }
+.new-job-badge-tag.tag-rq { background: #1d4ed8; }
+.new-job-badge-tag.tag-bk { background: #f87b38; color: #000; }
+.new-job-badge-tag.tag-sp { background: #6236c9; }
+.new-job-badge-tag.tag-it { background: #0d9488; }
+.new-job-badge-tag.tag-tw { background: #db2777; }
+
+.new-job-badge-item-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.new-job-badge-item-system-no {
+    font-weight: 700;
+    font-size: 18px;
+    color: #212529;
+}
+
+.new-job-badge-item-type {
+    font-size: 15px;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+/*  icon เดียวกับหน้า job-accept เป๊ะ (assets/images/siren.png) -> วางขวาสุดของรายการงาน urgent */
+.urgent-icon {
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: #ffe7e7;
+    color: #d92d20;
+    box-shadow: 0 2px 6px rgba(217, 45, 32, 0.2);
+}
+
+.urgent-icon img {
+    width: 25px;
+    height: auto;
+}

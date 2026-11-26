@@ -1,0 +1,36 @@
+<div class="system-menu-container">
+  <app-header></app-header>
+
+  <!-- Main Body Content -->
+  <main class="main-content">
+    <!-- Back / Re-select Warehouse button in top-left of the body -->
+    <!-- <div class="back-btn-container">
+      <button class="back-wh-btn" (click)="onBack()">
+        <mat-icon class="back-icon">arrow_back</mat-icon>
+      </button>
+    </div> -->
+
+    <!-- Center Headings -->
+    <div class="menu-headings-section">
+      <h1 class="page-title">เมนูระบบ</h1>
+      <p class="page-subtitle">กรุณาเลือกเมนูเพื่อดำเนินการต่อ</p>
+    </div>
+
+    <!-- Grid Layout of 4 Menu Cards -->
+    <div class="menu-grid">
+      <button
+        class="menu-card"
+        *ngFor="let item of menuItems"
+        [class.menu-card-disabled]="!item.isAvailable"
+        (click)="onSelectMenu(item.title)"
+        type="button"
+      >
+        <div class="menu-icon-container">
+          <img [src]="item.icon" [alt]="item.label" class="menu-icon" [class.report-broken-bag-icon]="item.title === 'Report Broken Bag'" fetchpriority="high">
+        </div>
+        <h2 class="menu-card-title">{{ item.label }}</h2>
+        <p class="menu-card-desc">{{ item.description }}</p>
+      </button>
+    </div>
+  </main>
+</div>

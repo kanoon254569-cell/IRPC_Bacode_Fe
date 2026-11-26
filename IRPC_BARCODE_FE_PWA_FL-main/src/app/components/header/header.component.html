@@ -1,0 +1,57 @@
+<header class="main-header">
+  <div class="left-section">
+    <a class="logo-box logo-link" routerLink="/system-menu">
+      <img src="assets/images/qtrack-logo.png" alt="IRPC Logo" class="header-logo">
+    </a>
+
+    <div class="info-box" [class.offline]="!_isOnline">
+      <div class="box-item" *ngIf="_username">
+        <mat-icon>person</mat-icon>
+        <span class="truncate-text" [title]="_username">{{ _username }}</span>
+      </div>
+      <span *ngIf="_username">|</span>
+      <div class="box-item" [title]="forkliftName">
+        <img src="assets/images/forklift.png" alt="Forklift">
+        <span class="truncate-text">{{ forkliftName }}</span>
+      </div>
+      |
+      <div class="box-item" [title]="warehouseFullTitle">
+        <img src="assets/images/warehouse-icon.png" alt="Warehouse">
+        <span class="truncate-text">{{ warehousePrimary }}<span class="wh-more" *ngIf="warehouseMoreSuffix"> {{ warehouseMoreSuffix }}</span></span>
+      </div>
+      |
+      <div class="box-item network-status-item" [class.offline]="!_isOnline">
+        <span class="network-status" [class.offline]="!_isOnline">
+        </span>
+
+        <span>
+          {{ _isOnline ? 'Online' : 'Offline' }}
+        </span>
+      </div>
+      |
+      <span class="box-item queue-box-item" (click)="onClickQueueList()">
+        <img src="assets/images/sync.png" alt="sync-icon">
+
+        <span class="sync-queue-stack">
+          <span class="sync-line">
+            {{ _isOnline ? 'ซิงค์ :' : 'ซิงค์ล่าสุด :' }} {{ _isOnline ? _clock : _lastSync }}
+          </span>
+          <span class="queue-line">
+            คิว : {{ _queueSummaryText }}
+          </span>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <div class="right-section">
+    <button class="help-btn" *ngIf="_hasTour" (click)="onClickHelpTour()" aria-label="วิธีใช้งาน">
+      <mat-icon>help_outline</mat-icon>
+    </button>
+
+    <button class="logout-btn" (click)="onLogout()">
+      <span>ออกจากระบบ</span>
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</header>

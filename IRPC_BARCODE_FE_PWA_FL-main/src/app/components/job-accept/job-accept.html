@@ -1,0 +1,273 @@
+<div #screen>
+  <app-header></app-header>
+
+  <!-- Header Section -->
+  <div class="head-section">
+
+    <!-- Left -->
+    <button class="back-button" (click)="onClickBack()">
+      <img src="assets/images/Arrow.png" alt="">
+    </button>
+
+    <!-- Title -->
+    <div class="page-title">
+      <div class="page-name">งานที่กำลังดำเนินการ</div>
+      <div class="page-sub">รายการงานที่กำลังดำเนินการ</div>
+    </div>
+
+    <!-- Right -->
+    <div class="header-right">
+
+      <!-- JobStatus Dropdown -->
+      <mat-form-field appearance="fill" class="filter">
+        <mat-label>สถานะ</mat-label>
+
+        <mat-select multiple [(value)]="_selectedStatus" (selectionChange)="onFilterChange()">
+          <mat-option *ngFor="let status of _ResponseProcessCbJobStatus?.data" [value]="status.id">
+            {{ status.name_th || status.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Job Type Dropdown -->
+      <mat-form-field appearance="fill" class="filter">
+        <mat-label>ประเภทงาน</mat-label>
+        <mat-select multiple [(value)]="_selectedJobType" (selectionChange)="onFilterChange()">
+          <mat-option *ngFor="let type of _ResponseProcessCbJobType?.data" [value]="type.id">
+            {{ type.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Date Filter -->
+      <mat-form-field appearance="fill" style="margin-top: 20px;" >
+        <mat-label>วันที่ วัน/เดือน/ปี</mat-label>
+        <input matInput [matDatepicker]="jobDatePicker" [(ngModel)]="_selectedDate" (dateChange)="onFilterChange()" (click)="jobDatePicker.open()" readonly>
+        <!-- <button *ngIf="_selectedDate" mat-icon-button matSuffix (click)="_selectedDate = null; onFilterChange()" aria-label="Clear date">
+          <mat-icon>close</mat-icon>
+        </button> -->
+        <mat-datepicker-toggle matSuffix [for]="jobDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #jobDatePicker></mat-datepicker>
+      </mat-form-field>
+
+      <!-- Refresh Button -->
+      <button class="refresh-button" [class.spinning]="_isLoading" [disabled]="_isLoading" (click)="onClickRefresh()" aria-label="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+
+      <!-- Load To Truck Button -->
+      <button class="load-truck-button" [class.driving]="_isLoadTruckDriving" [disabled]="_isLoadTruckDriving"
+        (click)="onClickLoadTruck()">
+        <img src="assets/images/truck.png" class="load-truck-icon">
+        <span>Load ของขึ้นรถ</span>
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="job-container" *ngIf="!_isLoading; else loadingSkeleton">
+
+    <div class="job-card" [ngClass]="{'urgent': job.isUrgent === 'Y' && !job.isComplete}" *ngFor="let job of _jobCardData">
+
+      <!-- Header -->
+      <div class="job-card-header">
+        <div class="job-tag" [ngClass]="{
+        'tag-in': job.jobTag === 'IN',
+        'tag-out': job.jobTag === 'OUT',
+        'tag-rq': job.jobTag === 'RQ',
+        'tag-bk': job.jobTag === 'BK',
+        'tag-sp': job.jobTag === 'SP',
+        'tag-it': job.jobTag === 'IT',
+        'tag-tw': job.jobTag === 'TW'
+    }" (click)="onClickTagInfo(job.jobTag)" role="button" aria-label="อธิบาย Tag งาน">
+          {{ job.jobTag }}
+        </div>
+
+        <div class="job-number">
+          {{ job.jobNomber }}
+        </div>
+
+        <div class="urgent-icon" *ngIf="job.isUrgent === 'Y' && !job.isComplete" aria-label="urgent job" title="Urgent">
+          <img src="assets/images/siren.png" alt="urgent">
+        </div>
+      </div>
+
+      <!-- Grade / Lot -->
+      <div class="job-grade-lot">
+        <div class="grade" *ngFor="let item of job?.jobGradeLot; let i = index" [class.completed]="isGradeLotComplete(item)">
+          {{ i + 1 }}. {{ item?.documentJob || '-' }} <span *ngIf="job.unit === 'Bag'" style="margin-left: 2px;"> ถุง</span> 
+
+                  <img *ngIf="isGradeLotComplete(item)" src="assets/images/check.png" alt="check-icon" class="check-icon" />
+        </div>
+      </div>
+
+      <!-- View Grade Lot More Button -->
+      <button class="btn-show-list" data-bs-toggle="modal"
+        [attr.data-bs-target]="'#gradeLotModal' + job.id">
+
+        <img src="assets/images/eye.png" alt="eye">
+        แสดงรายการ
+      </button>
+
+      <div class="job-step">
+        <!-- Step 1: การ์ดเดียว -->
+        <div *ngIf="job.jobStep === 1" class="job-step-btn green two-row" (click)="onClickJobStep(job)">
+          <div class="divider full"></div>
+          <div class="step-row">
+            <div class="side-left">
+              <img src="assets/images/get.png" alt="get">
+              <span class="step-label">รับ</span>
+            </div>
+            <div class="step-value">
+              <div class="loc-line" *ngFor="let loc of job.getLocation">{{ loc }}</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="side-left">
+              <img src="assets/images/put.png" alt="put">
+              <span class="step-label">วาง</span>
+            </div>
+            <div class="step-value">
+              <div class="loc-line" [class.pending-zone]="loc === 'P.Zone'" *ngFor="let loc of job.putLocation">
+                {{ loc }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: แยกเป็น 2 การ์ด -->
+        <ng-container *ngIf="job.jobStep === 2">
+          <div class="job-step-btn blue one-row" (click)="onClickJobStep(job, 'get')">
+            <div class="side-left">
+              <img src="assets/images/get.png" alt="get">
+              <span class="step-label">รับ</span>
+            </div>
+            <div class="divider"></div>
+            <div class="step-value">
+              <div class="loc-line" *ngFor="let loc of job.getLocation">{{ loc }}</div>
+            </div>
+          </div>
+
+          <div class="job-step-btn green one-row" [ngClass]="{'disabled': job.isPutDisabled}"
+            [style.cursor]="job.isPutDisabled ? 'not-allowed' : 'pointer'"
+            (click)="!job.isPutDisabled && onClickJobStep(job, 'put')">
+            <div class="side-left">
+              <img src="assets/images/put.png" alt="put">
+              <span class="step-label">วาง</span>
+            </div>
+            <div class="divider"></div>
+            <div class="step-value">
+              <div class="loc-line" [class.pending-zone]="loc === 'P.Zone'" *ngFor="let loc of job.putLocation">
+                {{ loc }}</div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Footer -->
+      <div class="job-footer">
+
+        <div class="job-status" [ngClass]="{
+        'status-pending': job.jobStatus === 'รอดำเนินการ',
+        'status-approve': job.jobStatus === 'คลังอนุมัติแล้ว',
+        'status-sp-approve': job.jobStatus === 'SP Approve',
+        'status-sending': job.jobStatus === 'กำลังดำเนินการ',
+        'status-complete': job.jobStatus === 'เสร็จสิ้น'
+      }">
+          {{ translateJobStatus(job.jobStatus) }}
+        </div>
+
+        <div class="job-progress">
+          {{ job.jobQtyProgress }} <span *ngIf="job.unit === 'Bag'">ถุง</span> <span *ngIf="job.unit === 'Pallet'">พาเลท</span> <span *ngIf="job.unit === 'kg'">kg</span>
+        </div>
+
+      </div>
+
+      <!-- Job Item Detail Modal -->
+      <div class="modal fade" [id]="'gradeLotModal' + job.id" tabindex="-1">
+
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <div class="modal-title-row">
+                <h5 class="modal-title">
+                  รายละเอียดใบงาน
+                </h5>
+                <div class="modal-subtitle">System No. {{ job.jobNomber }}</div>
+              </div>
+
+              <button type="button" class="btn-close" data-bs-dismiss="modal">
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <div class="job-grade-lot-modal" *ngFor="let item of job?.jobGradeLot; let i = index">
+                <div class="grade-modal" [class.completed]="isGradeLotComplete(item)">
+                  <div class="grade-modal-doc">{{ i + 1 }}. {{ item?.documentJob || '-' }}</div>
+                  <div class="grade-modal-meta">
+                    <span *ngIf="job.unit === 'Bag'">ถุง</span>
+
+                    <img *ngIf="isGradeLotComplete(item)" src="assets/images/check.png" alt="check-icon" class="check-icon" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Empty State Section -->
+    <div class="empty-stage" *ngIf="_jobCardData.length === 0">
+      <div class="empty-content">
+        <div class="empty-board">
+          <div class="empty-board-page">
+            <span class="empty-board-scanline"></span>
+            <div class="empty-board-lines">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+        <h3 class="empty-title">
+          {{ _jobCardData.length === 0 ? 'ไม่มีงานที่กำลังดำเนินการ' : 'ไม่พบงานตามเงื่อนไขที่เลือก' }}
+        </h3>
+        <p class="empty-message">
+          {{ _jobCardData.length === 0 ? 'ไม่พบรายการงานที่ต้องทำในขณะนี้' : 'ลองเปลี่ยน Status หรือ Job Type แล้วค้นหาใหม่อีกครั้ง' }}
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Skeleton Loading -->
+  <ng-template #loadingSkeleton>
+    <div class="job-container skeleton-container">
+      <div class="skeleton-card" *ngFor="let item of [1,2,3,4,5,6]">
+        <div class="skeleton-header">
+          <div class="skeleton-chip"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+        <div class="skeleton-block">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+        </div>
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-step"></div>
+        <div class="skeleton-footer">
+          <div class="skeleton-pill"></div>
+          <div class="skeleton-pill short"></div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+</div>

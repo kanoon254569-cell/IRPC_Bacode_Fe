@@ -1,0 +1,718 @@
+.loading-truck-screen {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.loading-truck-row {
+  min-height: 0;
+}
+
+.loading-truck-col {
+  min-height: 0;
+  height: 100%;
+}
+
+button.back-wh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 54px;
+  min-width: 100px;
+  border-radius: 8px;
+  background-color: #F8C538;
+  color: #000000;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+button.back-wh-btn mat-icon {
+  margin: 0;
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+button.back-wh-btn:active {
+  background-color: #b58209;
+  transform: scale(0.96);
+}
+
+button.back-wh-btn:focus-visible {
+  outline: 5px solid rgba(248, 197, 56, 0.4);
+  outline-offset: 3px;
+}
+
+.system-number-card {
+    border: 1px solid #bababa;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.system-number-card-header {
+    border-bottom: 1px solid #e5e5e5;
+    padding: 0px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+
+    img {
+        width: 25px;
+        height: auto;
+    }
+}
+
+.header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    margin-left: -120px;
+}
+
+.system-number-card-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 24px;
+    max-height: 80px;
+}
+
+.empty-sm-data {
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+}
+
+.job-tag {
+    color: #fff;
+    font-weight: 600;
+    padding: 2px 8px;
+    text-align: center;
+    font-size: 32px;
+    margin-right: 8px;
+}
+
+.job-number {
+    font-size: 32px !important;
+}
+
+/* IN */
+.tag-in {
+    background: #14a318;
+}
+
+/* OUT */
+.tag-out {
+    background: #f8c538;
+    color: #000;
+}
+
+/* RQ */
+.tag-rq {
+    background: #1d4ed8;
+}
+
+/* BK */
+.tag-bk {
+    background: #f87b38;
+}
+
+.job-number {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.scanner-container {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #bababa;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.scanner-container-header {
+    display: flex;
+    justify-content: space-between;
+    /* padding: 8px 0; */
+}
+
+.scanner-container-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+}
+
+.scanner-container-header-left img {
+    width: 22px;
+    height: auto;
+}
+
+.scanner-container-header-right {
+    display: flex;
+    align-items: center;
+}
+
+
+/* Hidden Scanner Input (Angular Material) */
+.hidden-scanner-field {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Scan Button */
+.scan-qr-button {
+    width: 100%;
+    background: #1c2a6b;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 18px;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.scan-qr-button img {
+    width: 26px;
+    height: auto;
+    filter: brightness(0) invert(1);
+}
+
+.scan-qr-button.scanning {
+    background: #1ea64b;
+}
+
+.waiting-pallet-card {
+    margin-bottom: 16px;
+    border: 1px solid #bababa;
+    margin-top: 16px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.waiting-pallet-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 18px;
+    /* font-weight: 600; */
+    padding: 16px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.waiting-pallet-card-header img {
+    width: 20px;
+    height: auto;
+}
+
+.waiting-pallet-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+    overflow-y: auto;
+}
+
+/* ===== Empty State ===== */
+.waiting-pallet-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 270px;
+    max-height: 270px;
+}
+
+.waiting-pallet-empty img {
+    width: 56px;
+    height: auto;
+    opacity: 0.6;
+    margin-bottom: 8px;
+}
+
+.waiting-pallet-empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.waiting-pallet-empty-sub {
+    font-size: 14px;
+    color: #9a9a9a;
+}
+
+/* ===== Pallet Item ===== */
+.waiting-pallet-item {
+    display: flex;
+    align-items: stretch;
+    background: #ffffff;
+    border: 1px solid #bababa;
+    border-radius: 10px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.waiting-pallet-item.active {
+    border: 2px solid #1c5fd4;
+}
+
+.pallet-icon-box {
+    width: 90px;
+    flex-shrink: 0;
+    background-color: #eafbea;
+    border-right: 1px solid #bababa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pallet-icon-inner {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.pallet-icon-inner > img:not(.check-badge) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.check-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.pallet-info {
+    flex: 1;
+    min-width: 0;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.pallet-grade-line {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.pallet-id-line {
+    font-size: 13px;
+    color: #5a5a5a;
+}
+
+
+.waiting-pallet-locations {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.location-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.location-item img {
+    width: 14px;
+    height: auto;
+    filter: brightness(0) invert(1);
+}
+
+/* ===== Verified state = น้ำเงิน ===== */
+.waiting-pallet-item.active {
+    border: 2px solid #1c5fd4;
+}
+
+/* ===== Duplicate alert = แดง (overrides น้ำเงินชั่วคราว) ===== */
+.waiting-pallet-item.duplicate-alert {
+    border: 3px solid #d32f2f;
+    animation: pulse-red 0.6s ease-in-out 2;
+}
+
+
+/* ===== Selected for placement = แดง (ตอน scan pallet ที่ verify แล้วซ้ำ ก่อน scan location) ===== */
+.waiting-pallet-item.selected-placement {
+    border: 3px solid #d32f2f;
+    animation: pulse-red 0.6s ease-in-out 2;
+}
+
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.35); }
+}
+
+
+/* ===== Progress Bar Container ===== */
+.progress-bar-container {
+    background: #fff;
+    border: 1px solid #bababa;
+    border-radius: 10px;
+    height: 136px;
+}
+
+/* ===== Header ===== */
+.progress-bar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    min-height: 55px;
+}
+
+.progress-bar-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+}
+
+.progress-bar-header-left img {
+    width: 20px;
+    height: auto;
+}
+
+.progress-bar-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* ===== Badge (Get / Complete) ===== */
+.badge-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #333;
+}
+
+.badge-dot .dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+}
+
+.badge-get .dot {
+    background: #1c5fd4;
+}
+
+.badge-complete .dot {
+    background: #14a318;
+}
+
+.badge-location {
+    font-size: 12px;
+    color: #777;
+}
+.badge-location .dot {
+    background: #1c5fd4;
+}
+
+/* ===== Body ===== */
+.progress-bar-body {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 2px 16px;
+}
+
+.progress-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between !important;
+    width: 100%;
+}
+
+.progress-bar-percent {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    flex-shrink: 0;
+    min-width: 70px;
+}
+
+.progress-bar-fraction {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    flex-shrink: 0;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* ===== Track & Fill (รองรับ 2 สีซ้อนกันสำหรับงาน 2 Step) ===== */
+.progress-bar-track {
+    position: relative;
+    width: 100%;
+    height: 24px;
+    background: #e0e0e0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-bar-fill-get {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #1c5fd4;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+    z-index: 1;
+}
+
+.progress-bar-fill-complete {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #14a318;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+    z-index: 2;
+}
+
+.total-pallet-card {
+    background: #fff;
+    border: 1px solid #bababa;
+    border-radius: 10px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.total-pallet-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.total-pallet-card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+}
+
+.total-pallet-card-header-left img {
+    width: 20px;
+    height: auto;
+}
+
+.total-pallet-card-header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+}
+
+.badge-pending .dot { background: #f8c538; }
+.badge-waiting .dot { background: #1c5fd4; }
+.badge-done .dot { background: #14a318; }
+
+.total-pallet-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    min-height: 0;
+}
+
+/* Card 4 inside style */
+.header-btn {
+    background-color: #e5e5e5;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.header-btn:hover {
+    background-color: #d5d5d5;
+}
+
+.pallet-group {
+    border: 1px solid #bababa;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.pallet-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.pallet-group-header:hover {
+    background-color: #f1f1f1;
+}
+
+.group-title {
+    color: #333;
+}
+
+.group-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #555;
+    font-size: 14px;
+}
+
+.group-meta mat-icon.chevron-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+
+.pallet-group-header.expanded .group-meta mat-icon.chevron-icon {
+    transform: rotate(180deg);
+}
+
+.pallet-group-body-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+}
+
+.pallet-group-body-wrapper.expanded {
+    grid-template-rows: 1fr;
+}
+
+.pallet-group-body-inner {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.pallet-group-body {
+    border-top: 1px solid #bababa;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.total-pallet-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+}
+
+.total-pallet-row-icon img {
+    width: 40px;
+    height: auto;
+    object-fit: contain;
+}
+
+.total-pallet-row-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.total-pallet-row-grade {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+.total-pallet-row-id {
+    font-size: 13px;
+    color: #5a5a5a;
+}
+
+.total-pallet-row-status {
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.status-pending {
+    background: #f8c538;
+    color: #000;
+}
+
+.status-waiting {
+    background: #1c5fd4;
+}
+
+.status-done {
+    background: #14a318;
+}
+
+/* แถบสีพื้นหลัง + ขอบซ้ายตามสถานะ ให้กวาดตาเห็นภาพรวมเร็วขึ้นโดยไม่ต้องอ่าน badge ทีละใบ */
+.row-tint-pending {
+    background: #fffaeb;
+    border-left: 6px solid #f8c538;
+}
+
+.row-tint-waiting {
+    background: #eef4fd;
+    border-left: 6px solid #1c5fd4;
+}
+
+.row-tint-done {
+    background: #eefaee;
+    border-left: 6px solid #14a318;
+}

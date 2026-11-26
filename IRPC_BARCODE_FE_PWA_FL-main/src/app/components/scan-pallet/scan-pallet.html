@@ -1,0 +1,625 @@
+<div #screen class="d-flex flex-column scan-pallet-screen">
+    <app-header></app-header>
+
+    <div class="row p-2 g-2 flex-grow-1 m-0 scan-pallet-row">
+
+        <!-- Left Side -->
+        <div class="col-md-5 d-flex flex-column scan-pallet-col">
+
+            <!-- System Number Section -->
+            <div class="system-number-card">
+                <div class="system-number-card-header">
+
+                    <button class="back-button" (click)="onClickBack()">
+                        <img src="assets/images/Arrow.png" alt="back-icon">
+                    </button>
+
+                    <div class="header-title">
+                        สแกนยืนยันสินค้า
+                        <ng-container [ngSwitch]="_scanAction">
+                            <span *ngSwitchCase="'get'"><strong>(รับ)</strong></span>
+                            <span *ngSwitchCase="'put'"><strong>(วาง)</strong></span>
+                            <span *ngSwitchDefault><strong>(รับ เเละ วาง)</strong></span>
+                        </ng-container>
+
+                        <img [src]="_scanAction === 'get' ? 'assets/images/check-get.png' : 'assets/images/check.png'" alt="check-icon">
+                    </div>
+
+                    <div class="urgent-text" [class.invisible]="_job.isUrgent !== 'Y'">
+                        งานด่วน
+                    </div>
+
+                </div>
+
+                <div class="system-number-card-content">
+                    <div class="job-tag" [ngClass]="{
+                            'tag-in': _job.jobTag === 'IN',
+                            'tag-out': _job.jobTag === 'OUT',
+                            'tag-rq': _job.jobTag === 'RQ',
+                            'tag-bk': _job.jobTag === 'BK',
+                            'tag-sp': _job.jobTag === 'SP',
+                            'tag-it': _job.jobTag === 'IT',
+                            'tag-tw': _job.jobTag === 'TW'
+                        }">
+                        {{ _job.jobTag }}
+                    </div>
+
+                    <div class="job-number">
+                        {{ _job.jobNomber }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanner Section -->
+            <div class="scanner-container">
+                <div class="scanner-container-header">
+
+                    <div class="scanner-container-header-left">
+                        <img src="assets/images/qr-code.png" alt="qr-code-icon">
+
+                        สแกนถุง
+
+                        <span *ngIf="!_isSpecialJob" style="color: rgb(255, 123, 0);">* {{ _bagRequiredCount }} ถุงสำหรับตรวจสอบพาเลท</span>
+                    </div>
+
+                    <div class="scanner-container-header-right">
+
+                        <!-- Manual Input Mode Toggle -->
+                        <mat-slide-toggle class="manual-mode-toggle" [(ngModel)]="_isManualInputMode"
+                            (change)="onToggleManualInputMode($event.checked)">
+                            พิมพ์
+                        </mat-slide-toggle>
+
+                        <!-- Checkbox (ไม่ใช้กับงาน Special Package เพราะไม่ได้นับถุงต่อ Pallet แบบเดิม) -->
+                        <div class="check-box-container" *ngIf="!_isSpecialJob">
+                            <div class="check-box-item" *ngFor="let checked of _bagCheckList; let i = index"
+                                [class.checked]="checked">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Hidden Scanner Input (Plain HTML) -->
+                <input #scannerInput type="text" class="hidden-scanner-field" [(ngModel)]="_scannerValue"
+                    (keyup.enter)="onScannerEnter()" (blur)="onScannerInputBlur()" autocomplete="off" autocorrect="off" autocapitalize="off"
+                    spellcheck="false" inputmode="none" />
+
+                <!-- Scan Mode: ปุ่มสแกนปกติ
+                     งาน Special Package/BK/IT: ต้องกด "Add Pallet"/card ก่อนถึงสแกนได้จริง (เหมือนเดิม) -> ข้อความบังคับ "เลือก Pallet ก่อน"
+                     งาน RQ: ไม่ต้องกด Add Pallet แล้ว (auto เปิดกล่องจากการสแกนแทน) -> ถ้ามีกล่อง active อยู่โชว์เลขกล่องให้รู้
+                     ไม่มีก็สแกนตรงได้เลยเหมือนงานปกติ ไม่บังคับ "เลือก Pallet ก่อน" -->
+                <div class="scan-actions" *ngIf="!_isManualInputMode">
+                    <button type="button" class="scan-qr-button" [class.scanning]="_isScanning"
+                        (click)="onClickScanButton()">
+                        <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                        {{ _isSpecialJob && _specialActiveSeq !== null ? ('กำลังสแกนพาเลท #' + _specialActiveSeq)
+                        : _isSpecialJob && !_isAutoSpecialJob ? 'กรุณาเลือกพาเลทก่อน'
+                        : (_isScanning ? 'กำลังสแกน...' : 'กรุณากดปุ่มเพื่อสแกน') }}
+                    </button>
+
+                    <button type="button" class="clear-check-button" (click)="onClickClearCheckList()"
+                        title="ล้าง checkbox">
+                        X
+                    </button>
+                </div>
+
+                <!-- Manual Input Mode: ช่องพิมพ์เอง -->
+                <div class="scan-actions" *ngIf="_isManualInputMode">
+                    <input type="text" class="manual-input-field" [(ngModel)]="_manualInputValue"
+                        placeholder="พิมพ์รหัส เช่น costCenter|grade|lot|runningNo|palletId"
+                        (keyup.enter)="onClickSubmitManualInput()" autocomplete="off" />
+
+                    <button type="button" class="manual-input-submit" (click)="onClickSubmitManualInput()">
+                        ยืนยัน
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Scanned Pallet Section -->
+            <div class="scaned-palet-card">
+                <div class="scaned-palet-card-header">
+                    <img src="assets/images/box.png" alt="box-icon">
+
+                    <!-- งาน BK ใช้การ์ดเดียวกับงานกลุ่ม kilo แล้ว (Get แล้วยิง Put ต่อให้เองทันที รายการนี้ปกติว่าง
+                         มีของค้างเฉพาะตอน Put ไม่ผ่าน -> กด "ยิง Put อีกครั้ง" ที่การ์ด) ถุงที่เสร็จแล้วไปขึ้นเขียวฝั่งขวา -->
+                    {{ _isSpecialJob ? 'รายการที่รอเอาไปวาง' : 'พาเลทที่รอเอาไปวาง' }} : {{ _palletToPlaceList.length }} {{ _isSpecialJob ? 'รายการ' : 'พาเลท' }}
+                </div>
+
+                <div class="scaned-palet-card-content">
+
+                    <!-- Empty State -->
+                    <div class="scaned-palet-empty"
+                        *ngIf="_palletToPlaceList.length === 0 && _specialPreparedList.length === 0">
+                        <img src="assets/images/empty-pallet.png" alt="empty-pallet">
+                        <div class="scaned-palet-empty-title">{{ _isSpecialJob ? 'ยังไม่มีรายการที่ตรวจสอบ' : 'ยังไม่มีพาเลทที่ตรวจสอบ' }}</div>
+                        <div class="scaned-palet-empty-sub">{{ _isSpecialJob ? 'สามารถตรวจสอบถุงได้โดยการสแกน QR Code' : 'สามารถตรวจสอบพาเลทได้โดยการสแกน QR Code' }}</div>
+                    </div>
+
+                    <!-- งาน Special: การ์ดเหลือง แสดงรายการที่ถูก "ส่งให้ Step 2" ไว้แล้ว แต่ยังไม่มีใครมาสแกนรับ (แสดงผลอย่างเดียว กดอะไรไม่ได้) -->
+                    <!-- โครงสร้าง/สไตล์เหมือนการ์ด Pallet ปกติทุกอย่าง (border + footer) แค่เปลี่ยนเป็นสีเหลืองผ่าน class .prepared-placeholder -->
+                    <div class="scaned-palet-item prepared-placeholder" *ngFor="let prepared of _specialPreparedList">
+                        <div class="scaned-palet-item-top">
+                            <div class="pallet-icon-box">
+                                <img src="assets/images/pallet.png" alt="pallet">
+                            </div>
+                            <div class="pallet-info">
+                                <div class="pallet-grade-line">
+                                    {{ prepared.grade }} &bull; {{ prepared.lotNo }} &bull; {{ prepared.progressLabel }}
+                                </div>
+                                <div class="pallet-id-line">รอ Step 2 มารับ</div>
+                            </div>
+                        </div>
+
+                        <div class="scaned-palet-item-footer prepared-placeholder-footer">
+                            <span>นำไปวางที่</span>
+                            <div class="scaned-palet-locations">
+                                <span class="location-item" *ngFor="let loc of prepared.targetLocations">
+                                    <img src="assets/images/location.png" alt="location">
+                                    {{ formatLocationDisplay(loc.location) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pallet List -->
+                    <div class="scaned-palet-item" *ngFor="let pallet of _palletToPlaceList; trackBy: trackByPallet"
+                        [class.active]="pallet.isActive" [class.selected-placement]="pallet.isSelectedForPlacement">
+
+                        <div class="scaned-palet-item-top">
+                            <div class="pallet-icon-box">
+                                <img src="assets/images/pallet.png" alt="pallet">
+                                <img class="check-badge" src="assets/images/check.png" alt="check"
+                                    *ngIf="pallet.isChecked">
+                            </div>
+                            <div class="pallet-info">
+                                <div class="pallet-grade-line" *ngIf="!_isSpecialJob">
+                                    {{ pallet.grade }} &bull; {{ pallet.lotNo }} &bull; {{ pallet.progressLabel ?? (pallet.qty | number) }}
+                                </div>
+                                <div class="pallet-grade-line" *ngIf="_isSpecialJob">
+                                    {{ pallet.grade }} &bull; {{ pallet.lotNo }} &bull; {{ formatDisplayQty(pallet.qty) }} กก.
+                                </div>
+                                <!-- งานปกติ: โชว์ id เสมอ / งาน Special: โชว์ว่าอยู่ Pallet ใบไหน (เผื่อมีหลาย pallet รอวางพร้อมกัน) -->
+                                <!-- Pallet No. = เลขดิบจาก QR เสมอ (deriveRawPalletNo ไม่ผ่าน Number() ตัดเลขศูนย์หน้า) / id = เลข backend จริง (backendId)
+                                     รูปแบบเดียวกับ list ฝั่งขวา (total-pallet-row-id) -->
+                                <div class="pallet-id-line" *ngIf="!_isSpecialJob">หมายเลขพาเลท : {{ deriveRawPalletNo(pallet.qrCode) ?? pallet.id ?? 'รอตรวจสอบ' }} &bull; id : {{ pallet.backendId ?? 'รอตรวจสอบ' }}</div>
+                                <div class="pallet-id-line" *ngIf="_isSpecialJob">พาเลท #{{ specialSeqDisplayLabel(pallet.palletSeq) }}<ng-container *ngIf="_isAutoSpecialJob && specialPalletNos([pallet.qrCode].concat(pallet.bagCodes ?? [])) as palletNos"> &bull; หมายเลขพาเลท : {{ palletNos }}</ng-container></div>
+                            </div>
+
+                            <!-- ปุ่มลบ Pallet (ลบได้เฉพาะช่วงที่ยังเป็น รอสแกน Location เท่านั้น) -->
+                            <button type="button" class="pallet-delete-button"
+                                (click)="onClickDeletePallet(pallet); $event.stopPropagation()">
+                                -
+                            </button>
+                        </div>
+
+                        <div class="scaned-palet-item-footer"
+                            [class.selected-placement-footer]="pallet.isSelectedForPlacement">
+
+                            <!-- งาน BK: ไม่มีขั้นสแกนปลายทาง Put ยิงให้เองหลัง Get -> การ์ดที่ค้างตรงนี้คือ Put ยังไม่ผ่าน ให้กดยิงซ้ำ -->
+                            <ng-container *ngIf="_isBkJob; else nonBkFooter">
+                                <span *ngIf="isPutInFlight(pallet)">กำลังบันทึก...</span>
+                                <ng-container *ngIf="!isPutInFlight(pallet)">
+                                    <span>บันทึกการวาง (Put) ยังไม่สำเร็จ</span>
+                                    <button type="button" class="bk-retry-put-button"
+                                        (click)="onClickRetryBkPut(pallet); $event.stopPropagation()">
+                                        ยิง Put อีกครั้ง
+                                    </button>
+                                </ng-container>
+                            </ng-container>
+
+                            <ng-template #nonBkFooter>
+                            <!-- งาน Picking ที่ยังไม่มี Location ปลายทางกำหนดมาให้ (พาเลตแรก ยังไม่ได้เลือก Location เอง) -->
+                            <ng-container
+                                *ngIf="_isPickingJob && getTargetLocationsList(pallet).length === 0; else normalLocationList">
+                                <span>นำไปวางที่</span>
+                                <div class="scaned-palet-locations">
+                                    <span class="location-item location-item-pending">
+                                        <img src="assets/images/location.png" alt="location">
+                                        สแกน Preparing Zone
+                                    </span>
+                                </div>
+                            </ng-container>
+
+                            <!-- งานปกติ (มี Location ปลายทางกำหนดมาแล้ว) -->
+                            <ng-template #normalLocationList>
+                                <span>นำไปวางที่</span>
+                                <div class="scaned-palet-locations">
+                                    <span class="location-item" *ngFor="let loc of getVisibleTargetLocationsPrimary(pallet)">
+                                        <img src="assets/images/location.png" alt="location">
+                                        {{ formatLocationDisplay(loc.location) }}
+                                        <ng-container *ngIf="_isInboundJob && loc.totalQty !== undefined">({{ loc.completeQty ?? 0 }}/{{ loc.totalQty }})</ng-container>
+                                    </span>
+                                    <button type="button" class="location-more-button"
+                                        *ngIf="getVisibleTargetLocationsExtraCount(pallet) > 0"
+                                        (click)="onClickShowAllTargetLocations(pallet)">+{{ getVisibleTargetLocationsExtraCount(pallet) }} more</button>
+                                </div>
+                            </ng-template>
+                            </ng-template>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="col-md-7 d-flex flex-column scan-pallet-col">
+
+            <!-- Progress Bar -->
+            <div class="progress-bar-container">
+                <div class="progress-bar-header">
+                    <div class="progress-bar-header-left">
+                        <img src="assets/images/box.png" alt="box-icon">
+                        {{ _isSpecialJob ? 'kg ที่เสร็จแล้ว' : 'พาเลทที่เสร็จแล้ว' }}
+                    </div>
+
+                    <div class="progress-bar-header-right">
+                        <span class="badge-dot badge-get" *ngIf="_isMultiStep">
+                            <span class="dot"></span> รับสินค้าสำเร็จ {{ getPalletCount }} {{ _isSpecialJob ? 'kg' : 'พาเลท' }}
+                        </span>
+                        <span class="badge-dot badge-complete">
+                            <span class="dot"></span> สินค้าจัดวางสำเร็จ {{ _completedPalletCount }} {{ _isSpecialJob ? 'kg' : 'พาเลท' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="progress-bar-body">
+
+
+                    <div class="progress-header">
+                        <!-- Route Summary: from_location => to_location -->
+                        <div class="route-summary-row">
+                            <img src="assets/images/location.png" alt="route-icon">
+
+                            <span class="route-from">
+                                {{ _fromLocationPrimaryText }}
+                                <button type="button" class="route-more-btn" *ngIf="_fromLocationExtraCount > 0"
+                                    (click)="onClickShowAllFromLocations()">+{{ _fromLocationExtraCount }} more</button>
+                            </span>
+                            <mat-icon class="route-arrow">arrow_forward</mat-icon>
+                            <span class="route-to">
+                                {{ _toLocationPrimaryText }}
+                                <button type="button" class="route-more-btn" *ngIf="_toLocationExtraCount > 0"
+                                    (click)="onClickShowAllToLocations()">+{{ _toLocationExtraCount }} more</button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar-row">
+                        <div class="progress-bar-percent">{{ completePercent }}%</div>
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill-get" *ngIf="_isMultiStep" [style.width.%]="getPercent"></div>
+                            <div class="progress-bar-fill-complete" [style.width.%]="completePercent"></div>
+                        </div>
+                        <div class="progress-bar-fraction">{{ _completedPalletCount }}/{{ _totalPalletCount }} {{ _isSpecialJob ? 'kg' : 'พาเลท' }}</div>
+                    </div>
+
+                </div>
+
+                <!-- แยกตาม Location ปลายทาง: งานปกติเท่านั้น (1-step และ 2-step) เฉพาะตอนมี location ปลายทางมากกว่า 1 ที่ -->
+                <div class="location-progress-section" *ngIf="!_isSpecialJob && _toLocationProgressList.length > 1">
+                    <div class="location-progress-header" (click)="toggleLocationProgressCollapse()">
+                        <span class="location-progress-label">แยกตาม Location ปลายทาง</span>
+                        <mat-icon class="location-progress-chevron" [class.collapsed]="locationProgressCollapsed">expand_more</mat-icon>
+                    </div>
+                    <div class="location-progress-list" *ngIf="!locationProgressCollapsed">
+                        <div class="location-progress-row" *ngFor="let loc of _toLocationProgressList"
+                            [class.completed]="loc.totalQty > 0 && loc.completeQty >= loc.totalQty">
+                            <div class="location-progress-row-top">
+                                <span class="location-progress-name">
+                                    {{ loc.name }}
+                                    <span *ngIf="loc.totalQty > 0 && loc.completeQty >= loc.totalQty">&nbsp;&#x2713;</span>
+                                </span>
+                                <span class="location-progress-fraction">{{ loc.completeQty }}/{{ loc.totalQty }} พาเลท</span>
+                            </div>
+                            <div class="location-progress-track">
+                                <div class="location-progress-fill"
+                                    [style.width.%]="loc.totalQty > 0 ? (loc.completeQty / loc.totalQty * 100) : 0"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Pallet Container -->
+            <div class="total-pallet-card">
+                <div class="total-pallet-card-header">
+                    <div class="total-pallet-card-header-left">
+                        <img src="assets/images/box.png" alt="box-icon">
+                        {{ _isSpecialJob ? 'รายการทั้งหมด' : 'พาเลททั้งหมด' }} : {{ totalPalletAllCount }} {{ _isSpecialJob ? 'รายการ' : 'พาเลท' }}
+                    </div>
+
+                    <!-- ความหมายของสีย้ายไปโชว์ใน modal แทน (กดปุ่ม i) กันแถว header ยาวจนตก 2 บรรทัด -->
+                    <button type="button" class="total-pallet-legend-button"
+                        title="ความหมายของสถานะ" (click)="onClickShowPalletLegend()">
+                        <mat-icon>info</mat-icon>
+                    </button>
+
+                    <!-- งาน Special Package/BK/IT เท่านั้น (ไม่ใช่ RQ/Transfer WH ที่ auto เปิดกล่องจากการสแกนแทนแล้ว ไม่ต้องกดปุ่มนี้)
+                         ทุก item เต็มโควต้าแล้ว (งานเสร็จสมบูรณ์) -> ซ่อนปุ่มไปเลย ไม่มีอะไรให้กดเพิ่มได้อีกแล้ว -->
+                    <button type="button" class="special-add-pallet-button" *ngIf="_isSpecialJob && !_isAutoSpecialJob && !_allSpecialItemsFull"
+                        (click)="onClickAddSpecialPallet()">
+                        <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                        Add พาเลท
+                    </button>
+
+                </div>
+
+                <div class="total-pallet-card-content">
+                    <!-- Empty State: งาน Special/BK/Request/IT เท่านั้น (ก่อนสแกนถุงใบแรก list จะว่างเปล่าจริงๆ
+                         ต่างจากงานปกติที่มีแถวรอสแกนถุงจาก items[] ให้เห็นตั้งแต่ต้นอยู่แล้ว เลยไม่มีวันว่าง) -->
+                    <div class="scaned-palet-empty" *ngIf="_isSpecialJob && _totalPalletDisplayList.length === 0">
+                        <img src="assets/images/empty-pallet.png" alt="empty-pallet">
+                        <div class="scaned-palet-empty-title">ยังไม่มีรายการ</div>
+                        <div class="scaned-palet-empty-sub">{{ _isAutoSpecialJob ? 'สแกน QR Code ถุงเพื่อเริ่มต้น' : 'กดปุ่ม "Add พาเลท" เพื่อเริ่มสแกน' }}</div>
+                    </div>
+
+                    <!-- งานปกติ: จัดกลุ่ม row ตาม item (grade/lot) เป็น card ย่อ/ขยายได้ทีละ item -->
+                    <ng-container *ngIf="!_isSpecialJob">
+                        <div class="total-pallet-group" *ngFor="let g of _totalPalletGroupedList; trackBy: trackByGroupKey">
+                            <div class="total-pallet-group-header" [class.completed]="g.totalCount > 0 && g.doneCount >= g.totalCount" (click)="toggleGroupCollapse(g.key)">
+                                <span class="total-pallet-group-label">เกรด/ล๊อต : {{ g.grade }} {{ g.lotNo }}</span>
+                                <span class="total-pallet-group-count">{{ g.doneCount }}/{{ g.totalCount }} พาเลท</span>
+                                <mat-icon class="total-pallet-group-chevron" [class.collapsed]="isGroupCollapsed(g.key)">expand_more</mat-icon>
+                            </div>
+                            <div class="total-pallet-group-rows" *ngIf="!isGroupCollapsed(g.key)">
+                                <ng-container *ngFor="let p of g.rows; trackBy: trackByDisplayKey">
+                                    <ng-container *ngTemplateOutlet="palletRowTpl; context: { p: p }"></ng-container>
+                                </ng-container>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <!-- งาน Special/RQ/BK/IT: แสดงเป็น flat list เหมือนเดิม ไม่จัดกลุ่ม -->
+                    <ng-container *ngIf="_isSpecialJob">
+                        <ng-container *ngFor="let p of _totalPalletDisplayList; trackBy: trackByDisplayKey">
+                            <ng-container *ngTemplateOutlet="palletRowTpl; context: { p: p }"></ng-container>
+                        </ng-container>
+                    </ng-container>
+
+                    <!-- Template แถว pallet เดิมเป๊ะ (ย้ายมาเป็น ng-template ให้ทั้ง 2 โหมดด้านบนเรียกใช้ร่วมกันได้ ไม่ fork โค้ด) -->
+                    <ng-template #palletRowTpl let-p="p">
+                    <div class="total-pallet-row"
+                        [class.total-pallet-row-active]="_isSpecialJob && !_isAutoSpecialJob && p.status === 'special-open' && p.palletSeq === _specialActiveSeq"
+                        [class.total-pallet-row-clickable]="_isSpecialJob && !_isAutoSpecialJob && p.status === 'special-open'"
+                        [class.row-tint-pending]="p.status === 'pending'"
+                        [class.row-tint-source]="p.status === 'waiting-source-location' || (p.status === 'special-open' && p.locationName)"
+                        [class.row-tint-waiting]="p.status === 'waiting-location'"
+                        [class.row-tint-done]="p.status === 'complete'"
+                        (click)="_isSpecialJob && !_isAutoSpecialJob && p.status === 'special-open' ? onClickSpecialPalletCard(p.palletSeq ?? 0) : null">
+                        <div class="total-pallet-row-icon">
+                            <img src="assets/images/pallet.png" alt="pallet">
+                        </div>
+
+                        <!-- งานปกติ: บรรทัดใหญ่โชว์แค่ grade/lot/qty ล้วนๆ เสมอ ไม่ว่าจะเป็น pallet แบบไหน (เดิมงาน manual pallet
+                             เอาโค้ด PL ไปแปะนำหน้าบรรทัดนี้ด้วย ทำให้หน้าตาไม่เหมือนกันแต่ละแบบ สับสน)
+                             บรรทัดเล็กรวม "Pallet No." (เลขดิบจาก QR เสมอ, rawPalletNo ไม่ผ่าน Number() ตัดเลขศูนย์หน้า)
+                             กับ "id" (เลข backend จริง, backendId) ไว้บรรทัดเดียวกัน คั่นด้วย bullet -->
+                        <div class="total-pallet-row-info" *ngIf="!_isSpecialJob">
+                            <div class="total-pallet-row-grade">
+                                {{ p.grade }} &bull; {{ p.lotNo }} &bull; {{ formatDisplayQty(p.qty) }}
+                            </div>
+                            <div class="total-pallet-row-id">หมายเลขพาเลท : {{ p.rawPalletNo ?? p.id ?? 'รอตรวจสอบ' }} &bull; id : {{ p.backendId ?? 'รอตรวจสอบ' }}</div>
+                        </div>
+
+                        <!-- งาน RQ/Transfer WH เท่านั้น: บรรทัดใหญ่ = grade/lot/qty จริงเสมอ (ถ้ามีของแล้ว) บรรทัดเล็ก = "Pallet #N" แทน
+                             (ไม่มี backendId ให้โชว์คู่แบบงานปกติ เพราะ flow นี้ไม่มีการยิง backfill GetProcessPallet เลย)
+                             กล่องที่ยังไม่มีถุง (special-open เปล่าๆ) ไม่มีอะไรให้โชว์เป็นบรรทัดใหญ่ -> ใช้ "Pallet #N" แทนไปก่อน -->
+                        <div class="total-pallet-row-info" *ngIf="_isSpecialJob && _isAutoSpecialJob">
+                            <ng-container *ngIf="p.contents && p.contents.length > 0; else rqEmptyBox">
+                                <div class="total-pallet-row-grade">
+                                    {{ p.contents[0].grade }} &bull; {{ p.contents[0].lot }} &bull; {{ formatDisplayQty(p.contents[0].qty) }} กก.
+                                    <img *ngIf="p.contents.length > 1" src="assets/images/eye.png" class="special-eye-icon"
+                                        alt="ดูทั้งหมด" title="ดูทั้งหมด" (click)="onClickShowPalletContents(p); $event.stopPropagation()">
+                                </div>
+                                <div class="total-pallet-row-id">พาเลท #{{ specialSeqDisplayLabel(p.palletSeq) }}<ng-container *ngIf="p.palletNos"> &bull; หมายเลขพาเลท : {{ p.palletNos }}</ng-container></div>
+                            </ng-container>
+                            <ng-template #rqEmptyBox>
+                                <div class="total-pallet-row-grade">
+                                    พาเลท #{{ specialSeqDisplayLabel(p.palletSeq) }}<ng-container *ngIf="p.pendingLockedQty"> ({{ formatDisplayQty(p.pendingLockedQty) }} กก. &bull; {{ p.pendingLockedBagCount }} ถุง)</ng-container>
+                                </div>
+                                <!-- กล่องที่ยังไม่มีของ Get เข้า แต่มีถุง/พาเลทยืนยันแล้วรอสแกน Location ต้นทาง (ม่วง) -> โชว์หมายเลขพาเลทแทน
+                                     "กำลังสแกนถุง..." ที่ไม่ตรงความจริงแล้ว (นับเสร็จ/เป็นพาเลทเต็มที่ไม่มีอะไรให้นับ) -->
+                                <div class="total-pallet-row-id">
+                                    {{ p.palletNos ? 'หมายเลขพาเลท : ' + p.palletNos : (p.palletSeq === _specialActiveSeq ? 'กำลังสแกนถุง...' : 'ยังไม่มีถุง') }}
+                                </div>
+                            </ng-template>
+                        </div>
+
+                        <!-- งาน Special Package/BK เท่านั้น: 1 pallet ใส่ได้หลาย grade/lot -> โชว์แค่บรรทัดแรก มีมากกว่า 1 ค่อยกดไอคอนตาดูทั้งหมด -->
+                        <div class="total-pallet-row-info" *ngIf="_isSpecialJob && !_isAutoSpecialJob">
+                            <div class="total-pallet-row-grade">{{ p.grade }}</div>
+                            <div class="total-pallet-row-id" *ngIf="!p.contents || p.contents.length === 0">
+                                {{ p.palletSeq === _specialActiveSeq ? 'กำลังสแกนถุง...' : 'ยังไม่มีถุง' }}
+                            </div>
+                            <div class="total-pallet-row-content-line" *ngIf="p.contents && p.contents.length > 0">
+                                {{ p.contents[0].grade }} &bull; {{ p.contents[0].lot }} &bull; {{ formatDisplayQty(p.contents[0].qty) }} กก.
+                                <img *ngIf="p.contents.length > 1" src="assets/images/eye.png" class="special-eye-icon"
+                                    alt="ดูทั้งหมด" title="ดูทั้งหมด" (click)="onClickShowPalletContents(p); $event.stopPropagation()">
+                            </div>
+                        </div>
+
+                        <!-- สถานะ (งานปกติ = badge อ่านอย่างเดียว / งาน Special = ขึ้นปุ่ม "เตรียมเอาไปวาง" กดได้เมื่อมีของแล้ว) -->
+                        <ng-container *ngIf="_isSpecialJob; else normalStatus">
+                            <div class="special-open-status-col" *ngIf="p.status === 'special-open'">
+                                <!-- สแกนถุงเข้ากล่องนี้ไปแล้วแต่ยังไม่ได้ยืนยัน Location ต้นทาง -> บอกไว้กันลืมว่าต้องสแกนที่ไหน -->
+                                <span class="total-pallet-row-status status-source" *ngIf="p.locationName">
+                                    รอสแกน {{ p.locationName }}
+                                </span>
+                                <div class="special-open-status-actions">
+                                    <!-- งาน BK ไม่มีขั้นสแกน location ปลายทาง -> ไม่ต้อง "เตรียมเอาไปวาง" (Get ครบเมื่อไหร่ถือว่างานจบทันที)
+                                         งาน RQ/IT ก็ไม่ต้องกดเอง -> ปิดกล่องให้ทันทีที่ Get ครบโควต้า (ดู onConfirmSpecialQty/getSpecialFullPallet) -->
+                                    <button type="button" class="special-ready-button"
+                                        *ngIf="p.contents && p.contents.length > 0 && !_isBkJob && !_isAutoSpecialJob"
+                                        (click)="onClickReadyToPlaceSpecialPallet(p.palletSeq ?? 0); $event.stopPropagation()">
+                                        เตรียมเอาไปวาง
+                                    </button>
+                                    <!-- ลบ pallet นี้ได้เสมอตราบใดที่ยังไม่กด "เตรียมเอาไปวาง" -->
+                                    <button type="button" class="special-delete-open-button" title="ลบพาเลทนี้"
+                                        (click)="onClickDeleteSpecialOpenPallet(p.palletSeq ?? 0); $event.stopPropagation()">
+                                        &times;
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="total-pallet-row-status status-waiting" *ngIf="p.status === 'waiting-location'">
+                                รอสแกน Location
+                            </div>
+                            <!-- งาน BK ไม่มีขั้น "จัดวาง" จริงๆ -> ใช้คำว่า "สำเร็จ" เฉยๆ ต่างจาก Special Package ที่มีขั้นวางของจริง -->
+                            <div class="total-pallet-row-status status-done" *ngIf="p.status === 'complete'">
+                                {{ _isBkJob ? 'สำเร็จ' : 'สินค้าจัดวางสำเร็จ' }}
+                            </div>
+                        </ng-container>
+
+                        <ng-template #normalStatus>
+                            <div class="total-pallet-row-status" [class.status-pending]="p.status === 'pending'"
+                                [class.status-source]="p.status === 'waiting-source-location'"
+                                [class.status-waiting]="p.status === 'waiting-location'"
+                                [class.status-done]="p.status === 'complete'">
+                                {{ p.status === 'pending' ? (_isOutbound ? 'รอสแกนถุง' : 'รอสแกนถุงที่ BG')
+                                : p.status === 'waiting-source-location' ? ('รอสแกน ' + p.locationName)
+                                : p.status === 'waiting-location' ? 'รอสแกน Location'
+                                : '✓ สินค้าจัดวางสำเร็จ' }}
+                            </div>
+                        </ng-template>
+                    </div>
+                    </ng-template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Special Package: Modal สแกนถุง -->
+    <div class="special-qty-modal-overlay" *ngIf="_specialQtyModal">
+        <div class="special-qty-modal">
+            <div class="special-qty-modal-header">
+                <span>สแกนถุง (พาเลท #{{ specialSeqDisplayLabel(_specialQtyModal.palletSeq) }})</span>
+                <button type="button" class="special-qty-modal-close" (click)="onCloseSpecialQtyModal()">&times;</button>
+            </div>
+
+            <div class="special-qty-modal-body">
+                <div class="special-qty-modal-gradelot">
+                    {{ _specialQtyModal.item.grade }} &bull; {{ _specialQtyModal.parsed.lot }}
+                </div>
+                <div class="special-qty-modal-progress">
+                    {{ (_specialQtyModal.item.receive_qty ?? 0) + (_specialQtyModal.item.complete_qty ?? 0) + _specialModalScannedQty }}/{{ _specialQtyModal.item.total_qty }} กก. (เหลือ {{ _specialQtyModal.remaining - _specialModalScannedQty }} กก.<ng-container *ngIf="_specialQtyModal.sourceRecord?.qty != null"> &bull; พาเลทนี้มี {{ _specialQtyModal.sourceRecord.qty }} กก.</ng-container>)
+                </div>
+
+                <!-- toggle เอาออก/จัดเก็บ -->
+                <div class="special-qty-mode-toggle">
+                    <span [class.active]="_specialQtyModal.mode === 'take'">เอาออก</span>
+                    <mat-slide-toggle [checked]="_specialQtyModal.mode === 'store'"
+                        (change)="onSelectSpecialQtyMode($event.checked ? 'store' : 'take')">
+                    </mat-slide-toggle>
+                    <span [class.active]="_specialQtyModal.mode === 'store'">จัดเก็บ</span>
+                </div>
+
+                <!-- ปุ่ม "เลือกทั้งหมด" (งาน RQ/Transfer WH/IT เท่านั้น, ต้องรู้ยอด กก. จริงของพาเลทก่อน ดู sourceRecord.qty
+                     และพาเลทต้องไม่เกินยอดงานที่เหลือด้วย ดู _specialModalFullPalletExceedsRemaining -- ถ้าเกิน เอาทั้งใบ
+                     ไม่ได้จริง ไปโชว์ข้อความแนะนำแทนด้านล่างนี้) สลับจากนับทีละถุงมาเป็นเอาทั้งพาเลท กด "ยกเลิก" กลับมานับทีละถุงต่อได้ ไม่เสียของที่สแกนไว้ก่อนหน้า -->
+                <div class="special-select-all-row"
+                    *ngIf="_isAutoSpecialJob && _specialAllowsFullPallet && !_specialQtyModal.hint && _specialQtyModal.sourceRecord?.qty != null && !_specialModalFullPalletExceedsRemaining">
+                    <button type="button" class="special-select-all-button" *ngIf="!_specialQtyModal.selectAllMode"
+                        (click)="onToggleSpecialSelectAll(true)">
+                        เลือกทั้งหมด (เอาทั้งพาเลท {{ _specialQtyModal.sourceRecord.qty }} กก.)
+                    </button>
+                    <button type="button" class="special-select-all-cancel" *ngIf="_specialQtyModal.selectAllMode"
+                        (click)="onToggleSpecialSelectAll(false)">
+                        ยกเลิกเลือกทั้งหมด (กลับไปนับทีละถุง)
+                    </button>
+                </div>
+
+                <!-- พาเลทมี qty เกินยอดงานที่เหลือ (RQ/Transfer WH/IT เท่านั้น) -> ปุ่ม "เลือกทั้งหมด" ข้างบนถูกซ่อนไปแล้ว
+                     บอกตรงๆ ว่าทำไมถึงไม่มีปุ่มนี้ และต้องนับถุงเอาแค่เท่าไหร่ กันงงว่าหายไปไหน -->
+                <div class="special-qty-modal-hint-instruction"
+                    *ngIf="_isAutoSpecialJob && !_specialQtyModal.hint && _specialModalFullPalletExceedsRemaining">
+                    พาเลทนี้มี {{ _specialQtyModal.sourceRecord.qty }} กก. แต่งานเหลือแค่ {{ _specialQtyModal.remaining }} กก. กรุณานับถุงให้ครบ {{ _specialQtyModal.remaining }} กก. เท่านั้น
+                </div>
+
+                <ng-container *ngIf="!_specialQtyModal.selectAllMode; else selectAllSummary">
+                    <!-- toggle สแกนจริง/พิมพ์เอง (concept เดียวกับ toggle "พิมพ์" หน้า scan-pallet) -->
+                    <div class="special-manual-toggle-row">
+                        <mat-slide-toggle [(ngModel)]="_isSpecialManualInputMode"
+                            (change)="onToggleSpecialManualInputMode($event.checked)">
+                            พิมพ์
+                        </mat-slide-toggle>
+                    </div>
+
+                    <button type="button" class="special-bag-scan-button" *ngIf="!_isSpecialManualInputMode"
+                        [class.scanning]="_isSpecialBagScanning" (click)="onClickSpecialBagScanButton()">
+                        <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                        {{ _isSpecialBagScanning ? 'กำลังสแกน...' : 'กดเพื่อสแกนถุงเพิ่ม' }}
+                    </button>
+
+                    <div class="special-manual-input-row" *ngIf="_isSpecialManualInputMode">
+                        <input type="text" class="manual-input-field" [(ngModel)]="_specialManualInputValue"
+                            placeholder="พิมพ์รหัสถุง เช่น costCenter|grade|lot|runningNo|palletId"
+                            (keyup.enter)="onClickSubmitSpecialManualInput()" autocomplete="off" />
+                        <button type="button" class="manual-input-submit" (click)="onClickSubmitSpecialManualInput()">
+                            ยืนยัน
+                        </button>
+                    </div>
+
+                    <div class="special-scanned-bag-list">
+                        <div class="special-scanned-bag-row" *ngFor="let c of _specialQtyModal.scannedCodes">
+                            <span>{{ c }}</span>
+                            <button type="button" (click)="onRemoveSpecialScannedBag(c)">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- งาน RQ/Transfer WH/IT (นับถุงเอง): สแกนถุงเพิ่มได้เรื่อยๆ ครบแล้วกด "ยืนยัน" เพื่อล็อกจำนวนไว้ก่อน
+                         (ยังไม่ยิง Get) แล้วค่อยสแกน Location ต้นทางจริงเพื่อส่งข้อมูล (ดู onLockSpecialQtyForLocationScan /
+                         handleSpecialSourceLocationScan) -->
+                    <div class="special-qty-modal-hint-instruction"
+                        *ngIf="_isAutoSpecialJob && !_specialQtyModal.hint">
+                        สแกนถุงเพิ่มได้เรื่อยๆ ครบแล้วกด "ยืนยัน" แล้วสแกน Location ต้นทาง "{{ specialSourceLocationText(_specialQtyModal.item, _specialQtyModal.sourceLocation) }}" เพื่อส่งข้อมูล
+                    </div>
+                </ng-container>
+
+                <ng-template #selectAllSummary>
+                    <div class="special-select-all-summary">
+                        เลือกเอาทั้งพาเลทนี้ทั้งใบ ({{ _specialQtyModal.sourceRecord.qty }} กก.) กด "ยืนยัน" แล้วสแกน Location ต้นทาง "{{ specialSourceLocationText(_specialQtyModal.item, _specialQtyModal.sourceLocation) }}" เพื่อส่งข้อมูล
+                    </div>
+                </ng-template>
+
+                <div class="special-qty-modal-hint" *ngIf="_specialQtyModal.hint">{{ _specialQtyModal.hint }}</div>
+
+                <div class="special-qty-modal-actions">
+                    <button type="button" class="special-qty-modal-step2" *ngIf="_specialQtyModal.canSendToStep2"
+                        (click)="onClickSpecialStep2()">
+                        ส่งให้ Step 2
+                    </button>
+                    <!-- เลือกทั้งหมดอยู่ -> onConfirmSpecialSelectAll, RQ/TW/IT ไม่มี hint ค้าง -> กดเพื่อ "ล็อก" จำนวนไว้ก่อน
+                         (ยังไม่ยิง Get รอสแกน Location ต้นทางจริง) มี hint ค้าง (ลองยิงจากสแกน Location ไปแล้วแต่ fail จริง)
+                         -> กดลองยิงซ้ำตรงๆ ไม่ต้องล็อกใหม่/ไม่ต้องสแกน Location ซ้ำ (entry หลุดจาก _specialAwaitingSourceLocation
+                         ไปแล้ว) Special Package/BK: ยิง Get ตรงๆ เหมือนเดิมเสมอ (location ถูกยืนยันไปก่อนเปิด modal นี้อยู่แล้ว)
+                         ดู onClickSpecialQtyConfirm ที่รวม 3 ทางนี้ไว้ -->
+                    <button type="button" class="special-qty-modal-confirm" (click)="onClickSpecialQtyConfirm()">
+                        {{ _specialQtyModal.selectAllMode ? 'ยืนยันเลือกทั้งหมด' : 'ยืนยัน (' + _specialQtyModal.scannedCodes.length + ' ถุง)' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Special Package: Modal ดูรายการ grade/lot/qty รวมทั้งหมดของ pallet ใบเดียว (กดไอคอนตาตอนมีมากกว่า 1 grade/lot) -->
+    <div class="special-qty-modal-overlay" *ngIf="_specialContentsModal">
+        <div class="special-qty-modal special-contents-modal">
+            <div class="special-qty-modal-header">
+                <span>พาเลท #{{ specialSeqDisplayLabel(_specialContentsModal.seq) }}</span>
+                <button type="button" class="special-qty-modal-close" (click)="onCloseSpecialContentsModal()">&times;</button>
+            </div>
+
+            <div class="special-qty-modal-body">
+                <div class="special-contents-modal-list">
+                    <div class="special-contents-modal-row" *ngFor="let c of _specialContentsModal.contents">
+                        <span>{{ c.grade }} &bull; {{ c.lot }}</span>
+                        <span>{{ formatDisplayQty(c.qty) }} กก.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

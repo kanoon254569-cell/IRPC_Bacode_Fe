@@ -1,0 +1,233 @@
+<div class="scan-verify-container">
+  <app-header></app-header>
+
+  <!-- Control Bar below header -->
+  <section class="control-bar">
+    <div class="control-left-section">
+      <!-- Back Arrow Button -->
+      <button class="back-wh-btn" (click)="_onBack()" aria-label="Go back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="title-headers">
+        <h1 class="page-title">Scan Truck & Location Info</h1>
+        <p class="page-subtitle">Scan Truck & location เพื่อแสดงข้อมูลของรถ หรือ Pallet ใน Location ที่ Scan</p>
+      </div>
+    </div>
+  </section>
+
+  <main class="main-content">
+    <!-- Main Grid -->
+    <mat-grid-list cols="12" rowHeight="fit" class="scan-grid">
+      <!-- LEFT COLUMN -->
+      <mat-grid-tile [colspan]="5">
+        <div class="tile-content">
+          
+          <!-- Mode Toggle Buttons (ขึ้นครบ 2 ปุ่มเสมอ -> ปุ่มที่ไม่มีสิทธิ์ทำเป็นสีจาง กดแล้วเตือนแทนการสลับโหมด -->
+          <!-- หมายเหตุ: ไม่ใช้ attribute [disabled] เพราะปุ่มที่ disabled จริงจะไม่ยิง (click) เลย ทำให้เตือนไม่ได้ -->
+          <div class="mode-toggle-group">
+            <button class="mode-btn" [class.active]="_activeMode() === 'truck'" [class.disabled]="!_hasTruckPermission" (click)="_onSelectMode('truck')">
+              <mat-icon>local_shipping</mat-icon> Truck
+            </button>
+            <button class="mode-btn" [class.active]="_activeMode() === 'location'" [class.disabled]="!_hasLocationPermission" (click)="_onSelectMode('location')">
+              <mat-icon>location_on</mat-icon> Location
+            </button>
+          </div>
+
+          <!-- Middle Card: Scanned Info or Empty State -->
+          <div class="info-card content-card spaced-card">
+            <div class="card-title border-bottom-header">
+              {{ _activeMode() === 'truck' ? 'ข้อมูลรถ' : 'ข้อมูล Location' }}
+            </div>
+            
+            <div class="card-body-centered">
+              <!-- === TRUCK MODE === -->
+              @if (_activeMode() === 'truck') {
+                @if (!_isTruckScanned()) {
+                  <!-- Empty State -->
+                  <div class="empty-state">
+                    <mat-icon class="empty-icon-fallback">description</mat-icon>
+                    <div class="empty-title">ยังไม่ได้ Scan Truck</div>
+                    <div class="empty-subtitle">Scan Truck ได้ที่ปุ่ม Scan QR Code</div>
+                  </div>
+                } @else {
+                  <!-- Scanned State -->
+                  <div class="scanned-info-container truck-mode bg-blue-light">
+                    <mat-icon class="scanned-icon-large">local_shipping</mat-icon>
+                    <div class="scanned-label">Truck-01</div>
+                  </div>
+                }
+              }
+
+              <!-- === LOCATION MODE === -->
+              @if (_activeMode() === 'location') {
+                @if (!_isLocationScanned()) {
+                  <!-- Empty State -->
+                  <div class="empty-state">
+                    <mat-icon class="empty-icon-fallback">description</mat-icon>
+                    <div class="empty-title">ยังไม่ได้ Location</div>
+                    <div class="empty-subtitle">Scan Location ได้ที่ปุ่ม Scan QR Code</div>
+                  </div>
+                } @else {
+                  <!-- Scanned State -->
+                  <div class="location-scanned-layout">
+                    <div class="scanned-info-container bg-blue-light">
+                      <img src="assets/images/WarehouseBlack.png" alt="Warehouse" class="scanned-icon-large">
+                    </div>
+                    <div class="location-details-list">
+                      <div class="loc-detail-row"><span class="loc-label">Warehouse :</span> <span class="loc-value">{{ _locationData().warehouse }}</span></div>
+                      <div class="loc-detail-row"><span class="loc-label">Zone :</span> <span class="loc-value">{{ _locationData().zone }}</span></div>
+                      <div class="loc-detail-row"><span class="loc-label">Floor :</span> <span class="loc-value">{{ _locationData().floor }}</span></div>
+                      <div class="loc-detail-row"><span class="loc-label">Area :</span> <span class="loc-value">{{ _locationData().area }}</span></div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+
+          <!-- Bottom Card: Scanner -- รูปแบบเดียวกับหน้า pallet-management (ช่องซ่อน + ปุ่มสแกน + toggle พิมพ์) -->
+          <div class="info-card scan-action-card spaced-card">
+            <div class="scan-header border-bottom-header">
+              <span class="scan-title">{{ _activeMode() === 'truck' ? 'Scan Truck' : 'Scan Location' }}</span>
+              <mat-slide-toggle class="manual-mode-toggle" [checked]="_isManualInputMode()"
+                (change)="onToggleManualInputMode($event.checked)">
+                พิมพ์
+              </mat-slide-toggle>
+            </div>
+            <div class="scan-action-body">
+              <!-- Hidden Scanner Input -->
+              <input #_scanInput type="text" class="hidden-scanner-field"
+                (keyup.enter)="onScannerEnter(_scanInput)" (blur)="onScannerBlur($event)"
+                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" />
+
+              @if (!_isManualInputMode()) {
+                <!-- Scan Mode -->
+                <div class="scan-actions">
+                  <button type="button" class="scan-qr-button" [class.scanning]="_isScanning()" (click)="onClickScanButton()">
+                    <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                    {{ _isScanning() ? 'พร้อมสแกน...' : 'แตะเพื่อสแกน' }}
+                  </button>
+                </div>
+              } @else {
+                <!-- Manual Input Mode -->
+                <div class="scan-actions">
+                  <input #_manualInput type="text" class="manual-input-field"
+                    [placeholder]="_activeMode() === 'truck' ? 'พิมพ์ Truck ID / QR' : 'พิมพ์ Location เช่น M42E05'"
+                    (keyup.enter)="onSubmitManualInput(_manualInput)" autocomplete="off" />
+                  <button type="button" class="manual-input-submit" (click)="onSubmitManualInput(_manualInput)">ยืนยัน</button>
+                </div>
+              }
+            </div>
+          </div>
+
+        </div>
+      </mat-grid-tile>
+
+      <!-- RIGHT COLUMN -->
+      <mat-grid-tile [colspan]="7">
+        <div class="tile-content">
+          
+          <div class="info-card content-card">
+            <!-- === TRUCK MODE === -->
+            @if (_activeMode() === 'truck') {
+              @if (!_isTruckScanned()) {
+                <!-- Empty State -->
+                <div class="empty-state-full">
+                  <mat-icon class="empty-icon-fallback">description</mat-icon>
+                  <div class="empty-title">ยังไม่ได้ Scan Truck</div>
+                  <div class="empty-subtitle">Scan Truck ได้ที่ปุ่ม Scan QR Code</div>
+                </div>
+              } @else {
+                <div class="truck-details-scroll-list">
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Shipment</span>
+                    <span class="detail-value">{{ _truckData().shipment }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">DO</span>
+                    <span class="detail-value">{{ _truckData().do }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Grade</span>
+                    <span class="detail-value">{{ _truckData().grade }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Lot</span>
+                    <span class="detail-value">{{ _truckData().lot }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Name</span>
+                    <span class="detail-value">{{ _truckData().name }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">License Plate</span>
+                    <span class="detail-value">{{ _truckData().licensePlate }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Ship To</span>
+                    <span class="detail-value">{{ _truckData().shipTo }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Sold To</span>
+                    <span class="detail-value">{{ _truckData().soldTo }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Dock</span>
+                    <span class="detail-value">{{ _truckData().dock }}</span>
+                  </div>
+                  <div class="truck-detail-item">
+                    <span class="detail-label">Seal No.</span>
+                    <span class="detail-value">{{ _truckData().sealNo }}</span>
+                  </div>
+                </div>
+              }
+            }
+
+            <!-- === LOCATION MODE === -->
+            @if (_activeMode() === 'location') {
+              @if (!_isLocationScanned()) {
+                <!-- Empty State -->
+                <div class="empty-state-full">
+                  <mat-icon class="empty-icon-fallback">description</mat-icon>
+                  <div class="empty-title">ยังไม่ได้ Scan Location</div>
+                  <div class="empty-subtitle">Scan Location ได้ที่ปุ่ม Scan QR Code</div>
+                </div>
+              } @else {
+                <div class="capacity-header border-bottom-header">
+                  <div class="capacity-title-row">
+                    <span class="capacity-title">Pallet ใน Location {{ _locationData().locationDesc }}</span>
+                    <span class="capacity-percent">{{ _locationData().pallets.length }} Pallet</span>
+                  </div>
+                </div>
+                <div class="pallet-scroll-list">
+                  @for (pallet of _locationData().pallets; track pallet.id) {
+                    <div class="pallet-item">
+                      <div class="pallet-icon-container">
+                        <img src="assets/images/pallet.png" alt="Pallet" class="pallet-icon-fallback">
+                      </div>
+                      <div class="pallet-details">
+                        <div class="pallet-title">เกรด : {{ pallet.grade || '-' }} &bull; ล็อต : {{ pallet.lot || '-' }}</div>
+                        <div class="pallet-id">
+                          ตันที่ : {{ pallet.ton_no ?? '-' }} &nbsp;|&nbsp;
+                          Cost Center : {{ pallet.cost_center || '-' }} &nbsp;|&nbsp;
+                          Qty : {{ pallet.qty }}
+                        </div>
+                      </div>
+                    </div>
+                  } @empty {
+                    <div class="empty-state-full">
+                      <mat-icon class="empty-icon-fallback">inventory_2</mat-icon>
+                      <div class="empty-title">ไม่มี Pallet ใน Location นี้</div>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+        </div>
+      </mat-grid-tile>
+    </mat-grid-list>
+  </main>
+
+</div>

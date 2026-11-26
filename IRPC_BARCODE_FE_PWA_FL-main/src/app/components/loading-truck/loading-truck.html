@@ -1,0 +1,203 @@
+<div #screen class="d-flex flex-column loading-truck-screen">
+    <app-header></app-header>
+
+    <div class="row p-2 g-2 flex-grow-1 m-0 loading-truck-row">
+
+        <!-- Left Side -->
+        <div class="col-md-5 d-flex flex-column loading-truck-col">
+
+            <!-- System Number Section -->
+            <div class="system-number-card">
+                <div class="system-number-card-header">
+                    <button class="back-wh-btn" (click)="onClickBack()">
+                        <mat-icon class="back-icon">arrow_back</mat-icon>
+                    </button>
+                    <span class="header-title">Load ของขึ้นรถ</span>
+                </div>
+
+                <div class="system-number-card-content" *ngIf="job.jobNomber !== '-'; else emptySM">
+                    <div class="d-flex align-items-center justify-content-center w-100">
+                        <div class="job-tag tag-out" *ngIf="job.jobTag === 'OUT'">OUT</div>
+                        <div class="job-tag tag-in" *ngIf="job.jobTag === 'IN'">IN</div>
+                        <div class="d-flex flex-column text-center">
+                            <span class="job-number">{{ job.jobNomber }}</span>
+                            <span class="text-muted" style="font-size: 14px;">System No.</span>
+                        </div>
+                    </div>
+                </div>
+                <ng-template #emptySM>
+                    <div class="system-number-card-content">
+                        <div class="empty-sm-data">
+                            ยังไม่มีข้อมูล SM
+                        </div>
+                    </div>
+                </ng-template>
+            </div>
+
+            <!-- Scanner Section -->
+            <div class="scanner-container">
+                <div class="scanner-container-header">
+                    <div class="scanner-container-header-left">
+                        <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                        Scan Bag
+                    </div>
+                </div>
+
+                <!-- Hidden Scanner Input (Plain HTML) -->
+                <input #scannerInput type="text" class="hidden-scanner-field" [(ngModel)]="_scannerValue"
+                    (keyup.enter)="onScannerEnter()" autocomplete="off" autocorrect="off" autocapitalize="off"
+                    spellcheck="false" inputmode="none" />
+
+                <!-- Scan Button -->
+                <button type="button" class="scan-qr-button" [class.scanning]="_isScanning"
+                    (click)="onClickScanButton()">
+                    <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                    {{ _isScanning ? 'Scanning..' : 'Scan Qr Code' }}
+                </button>
+                
+            </div>
+
+            <!-- Scaned Pallet Section -->
+            <div class="waiting-pallet-card">
+                <div class="waiting-pallet-card-header">
+                    <div>
+                        <img src="assets/images/box.png" alt="box-icon">
+                        Pallet ที่รอเอาไปวาง : {{ _palletToPlaceList.length }} Pallet
+                    </div>
+                    <div class="badge-dot badge-location">
+                        <span class="dot"></span> Location
+                    </div>
+                </div>
+
+                <div class="waiting-pallet-card-content">
+
+                    <!-- Empty State -->
+                    <div class="waiting-pallet-empty" *ngIf="_palletToPlaceList.length === 0">
+                        <img src="assets/images/empty-pallet.png" alt="empty-pallet">
+                        <div class="waiting-pallet-empty-title">ยังไม่มี Pallet ที่ Verify</div>
+                        <div class="waiting-pallet-empty-sub">สามารถ Verify Pallet ได้โดยการ Scan QR Code</div>
+                    </div>
+
+                    <!-- Pallet List -->
+                    <div class="waiting-pallet-item" *ngFor="let pallet of _palletToPlaceList"
+                        [class.active]="pallet.isActive" [class.selected-placement]="pallet.isSelectedForPlacement">
+                        
+                        <div class="pallet-icon-box">
+                            <div class="pallet-icon-inner">
+                                <img src="assets/images/pallet.png" alt="pallet">
+                                <img class="check-badge" src="assets/images/check.png" alt="check"
+                                    *ngIf="pallet.isChecked">
+                            </div>
+                        </div>
+                        <div class="pallet-info">
+                            <div class="pallet-grade-line">
+                                {{ pallet.grade }} {{ pallet.lotNo }} &bull; {{ pallet.qty | number }}
+                            </div>
+                            <div class="pallet-id-line">id : {{ pallet.id }}</div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="col-md-7 d-flex flex-column loading-truck-col">
+
+            <!-- Progress Bar -->
+            <!-- Progress Bar -->
+            <div class="progress-bar-container">
+                <div class="progress-bar-header">
+                    <div class="progress-bar-header-left">
+                        <img src="assets/images/box.png" alt="box-icon">
+                        Pallet ที่เสร็จแล้ว
+                    </div>
+
+                    <div class="progress-bar-header-right">
+                        <span class="badge-dot badge-get" *ngIf="_isMultiStep">
+                            <span class="dot"></span> Get {{ _getPalletCount }} pallet
+                        </span>
+                        <span class="badge-dot badge-complete">
+                            <span class="dot"></span> Complete {{ _completedPalletCount }} pallet
+                        </span>
+                    </div>
+                </div>
+
+                <div class="progress-bar-body">
+                    <div class="progress-header">
+                        <div class="progress-bar-percent">{{ _completePercent }}%</div>
+                        <div class="progress-bar-label">Progress Bar</div>
+                        <div class="progress-bar-fraction">{{ _completedPalletCount }}/{{ _totalPalletCount }}</div>
+                    </div>
+
+
+                    <div class="progress-bar-track">
+                        
+                        <div class="progress-bar-fill-get" *ngIf="_isMultiStep" [style.width.%]="_getPercent"></div>
+                        <div class="progress-bar-fill-complete" [style.width.%]="_completePercent"></div>
+                    </div>
+
+
+                </div>
+            </div>
+
+            <!-- Total Pallet Container -->
+            <!-- Total Pallet Container -->
+            <div class="total-pallet-card">
+                <div class="total-pallet-card-header">
+                    <div class="total-pallet-card-header-left">
+                        <img src="assets/images/box.png" alt="box-icon">
+                        Pallet ทั้งหมด : 20 Pallet &bull; 20000
+                    </div>
+
+                    <div class="total-pallet-card-header-right">
+                        <span class="badge-dot badge-done"><span class="dot"></span> สินค้าจัดวางสำเร็จ</span>
+                        <button class="header-btn" (click)="expandAll()">Expand All</button>
+                        <button class="header-btn" (click)="collapseAll()">Collapse All</button>
+                    </div>
+                </div>
+
+                <div class="total-pallet-card-content">
+                    <div class="pallet-group" *ngFor="let group of _totalPalletDisplayGroups; trackBy: trackByGroupName">
+                        <div class="pallet-group-header" (click)="toggleGroup(group.groupName)" [class.expanded]="group.isExpanded">
+                            <div class="group-title">{{ group.groupName }}</div>
+                            <div class="group-meta">
+                                <span>{{ group.completedCount }} / {{ group.totalCount }} Pallet</span>
+                                <mat-icon class="chevron-icon">expand_more</mat-icon>
+                            </div>
+                        </div>
+                        
+                        <div class="pallet-group-body-wrapper" [class.expanded]="group.isExpanded">
+                            <div class="pallet-group-body-inner">
+                                <div class="pallet-group-body">
+                                    <div class="total-pallet-row" *ngFor="let p of group.items"
+                                        [class.row-tint-pending]="p.status === 'pending'"
+                                        [class.row-tint-waiting]="p.status === 'waiting-location'"
+                                        [class.row-tint-done]="p.status === 'complete'">
+                                <div class="total-pallet-row-icon">
+                                    <img src="assets/images/pallet.png" alt="pallet">
+                                </div>
+
+                                <div class="total-pallet-row-info">
+                                    <div class="total-pallet-row-grade">
+                                        {{ p.grade }} &bull; {{ p.lotNo }} &bull; {{ p.qty | number }}
+                                    </div>
+                                    <div class="total-pallet-row-id">id : {{ p.id ?? 'รอ Verify' }}</div>
+                                </div>
+
+                                <button type="button" class="total-pallet-row-status"
+                                    [class.status-pending]="p.status === 'pending'"
+                                    [class.status-waiting]="p.status === 'waiting-location'"
+                                    [class.status-done]="p.status === 'complete'">
+                                    {{ p.status === 'pending' ? 'รอสแกนถุง'
+                                    : p.status === 'waiting-location' ? 'รอสแกน Location'
+                                    : '✓ สินค้าจัดวางสำเร็จ' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

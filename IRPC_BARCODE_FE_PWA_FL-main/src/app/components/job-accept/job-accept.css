@@ -1,0 +1,951 @@
+.head-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  width: 100%;
+  padding: 0px 16px;
+  border-bottom: 1px solid #bababa;
+}
+
+.back-button {
+  width: 120px;
+  height: 64px;
+
+  border: none;
+  border-radius: 10px;
+  background: #f7bf2d;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+}
+
+.back-button img {
+  width: 34px;
+  filter: brightness(0);
+}
+
+.page-title {
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 8px;
+}
+
+.page-name {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 0.7;
+}
+
+.page-sub {
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+  margin-top: 6px;
+}
+
+.header-right {
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.filter {
+  flex: 1;
+  margin-bottom: -1.25em;
+}
+
+.refresh-button {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+
+  border: 1px solid #bababa;
+  border-radius: 10px;
+  background: #fff;
+  color: #2454d4;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+}
+
+.refresh-button mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-button.spinning mat-icon {
+  animation: spin-refresh 0.8s linear infinite;
+}
+
+@keyframes spin-refresh {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.load-truck-button {
+  overflow: hidden;
+
+  flex: 1;
+  min-height: 64px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #2454d4;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.load-truck-button img {
+  width: 34px;
+}
+
+/* กดแล้วตัวหนังสือจางหาย ไอคอนรถ "วิ่ง" ทะลุขอบขวาปุ่มออกไป (overflow:hidden ด้านบนตัดให้พอดี) ก่อนค่อย navigate จริง */
+.load-truck-button.driving span {
+  animation: load-truck-text-out 0.25s ease-in forwards;
+}
+
+.load-truck-button.driving .load-truck-icon {
+  animation: load-truck-drive 0.65s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+}
+
+@keyframes load-truck-text-out {
+  to { opacity: 0; transform: translateX(-8px); }
+}
+
+@keyframes load-truck-drive {
+  /*  2 จุดเดียวเท่ากับ load-truck-road-wipe เป๊ะ (เดิมมี 3 จุดที่ 70% ทำให้จังหวะไม่เท่าเส้นสี ดูเหมือนรถวิ่งเร็วกว่า) */
+  0% { transform: translateX(0) scale(1); }
+  100% { transform: translateX(260px) scale(1.15); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .load-truck-button.driving span,
+  .load-truck-button.driving .load-truck-icon {
+    animation: none;
+  }
+}
+
+.job-container {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  align-items: stretch;
+  overflow: auto;
+  height: calc(100vh - 170px);
+}
+
+.job-card {
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 16px 8px 16px;
+  border: 1px solid #bababa;
+  min-width: 320px;
+  max-width: 320px;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  animation: card-pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+/* จอคอม (กว้าง >=1400px) เท่านั้น: การ์ดถูก align-items:stretch ให้สูงเต็ม .job-container อยู่แล้ว แต่ content ข้างในเป็น block
+   ธรรมดาไม่ไหลตาม เลยเหลือช่องว่างลอยท้ายการ์ด -> ให้ job-grade-lot ยืดกินพื้นที่ที่เหลือแทน (ไม่แตะ .job-container/จอ tablet เลย) */
+@media (min-width: 1400px) {
+  .job-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .job-grade-lot {
+    flex: 1;
+    overflow: auto;
+  }
+}
+
+/*  gimmick: การ์ดเด้งเข้ามาทีละใบตอนโหลด (stagger 6 ใบแรก ที่เหลือ delay เท่ากันหมด กันรอนานตอน list ยาว) */
+.job-container .job-card:nth-child(1) { animation-delay: 0.02s; }
+.job-container .job-card:nth-child(2) { animation-delay: 0.06s; }
+.job-container .job-card:nth-child(3) { animation-delay: 0.10s; }
+.job-container .job-card:nth-child(4) { animation-delay: 0.14s; }
+.job-container .job-card:nth-child(5) { animation-delay: 0.18s; }
+.job-container .job-card:nth-child(6) { animation-delay: 0.22s; }
+.job-container .job-card:nth-child(n+7) { animation-delay: 0.22s; }
+
+/*  gimmick: แสงปาดเฉียงวิ่งผ่านการ์ดตอน hover เหมือนแสงสะท้อนบัตร */
+/* .job-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  transition: left 0.65s ease;
+} */
+
+.job-card:hover::before {
+  left: 130%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-card {
+    animation: none;
+  }
+
+  .job-card::before {
+    display: none;
+  }
+}
+
+.job-card.urgent {
+  border: 3px solid #ff0000;
+  animation: urgentBorderPulse 1s ease-in-out infinite;
+   box-shadow: rgba(255, 61, 2, 0.5) 0px 8px 24px;
+}
+
+/* Header */
+.job-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #bababa;
+  font-size: 20px;
+}
+
+.urgent-icon {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  /* border-radius: 50%; */
+  background: #ffe7e7;
+  color: #d92d20;
+  box-shadow: 0 2px 6px rgba(217, 45, 32, 0.2);
+}
+
+.urgent-icon img {
+  width: 25px;
+  height: auto;
+}
+
+.job-tag {
+  color: #fff;
+  font-weight: 600;
+  padding: 2px 8px;
+  text-align: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.job-tag:active {
+  transform: scale(0.92);
+}
+
+/* IN */
+.tag-in {
+  background: #14a318;
+}
+
+/* OUT */
+.tag-out {
+  background: #f8c538;
+  color: #000;
+}
+
+/* RQ */
+.tag-rq {
+  background: #1d4ed8;
+}
+
+/* BK */
+.tag-bk {
+  background: #f87b38;
+  color: #000;
+}
+
+/* SP */
+.tag-sp {
+    background: #6236C9;
+}
+
+.tag-it {
+    background: #0d9488;
+}
+
+/* TW (Transfer WH) */
+.tag-tw {
+    background: #db2777;
+}
+
+.job-number {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* Grade / Lot */
+.job-grade-lot {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 4px;
+  padding: 4px;
+  margin: 8px 0px;
+  /* border: 1px solid red; */
+  /* border: 1px solid #bababa; */
+  min-height: 90px;
+  border-radius: 5px;
+}
+
+.grade {
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+  background: #eeeeee;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.job-grade-lot-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 4px;
+  /* padding: 4px; */
+  margin: 4px 0px;
+}
+
+.grade-modal {
+  font-weight: 600;
+  color: #333;
+  background: #eeeeee;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 20px;
+  width: 100%;
+  text-align: left;
+}
+
+.grade-modal-doc {
+  flex: 1;
+  min-width: 0;
+  font-size: 24px;
+}
+
+.grade-modal-meta {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.modal-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.modal-subtitle {
+  font-size: 1.25rem;
+  color: #6b7280;
+}
+
+/* ปุ่มปิด X ของ modal "รายละเอียดใบงาน" -> ของเดิมใช้ default ของ Bootstrap (.btn-close) เล็กมาก (~1em)
+   ขยายด้วย font-size เพราะ width/height/background-size ของ Bootstrap ผูกกับหน่วย em ทั้งหมด */
+.modal-header .btn-close {
+  font-size: 22px;
+}
+
+.btn-show-list {
+  background-color: #f8c538;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  width: 100%;
+  font-size: 18px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-show-list img {
+  width: 20px;
+  height: auto;
+}
+
+.job-step {
+  height: 250px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.job-step-btn {
+  border-radius: 10px;
+  color: white;
+  padding: 12px 0;
+}
+
+.job-step-btn.green {
+  background: #16A34A;
+}
+
+.job-step-btn.blue {
+  background: #1D4ED8;
+}
+
+.job-step-btn.disabled {
+  background: #9CA3AF;
+  pointer-events: none;
+}
+
+.side-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.side-left img {
+  width: 60px;
+  height: auto;
+}
+
+.step-label {
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.step-value {
+  font-size: 20px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.loc-line {
+  display: block;
+  width: 80%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* บรรทัดสุดท้ายที่เป็น "+n more" ให้ดูจางลงนิดหน่อย */
+.loc-line:last-child:not(:first-child):not(:nth-child(2)) {
+  opacity: 0.85;
+  font-size: 0.85em;
+}
+
+/* 2 Step */
+.job-step-btn.one-row {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0 16px;
+}
+
+.job-step-btn.one-row .side-left {
+  width: 40%;
+}
+
+.job-step-btn.one-row .divider {
+  width: 1px;
+  height: 60%;
+  background: rgba(255, 255, 255, 0.6);
+  margin: 0 16px;
+}
+
+/* 1 Step */
+.job-step-btn.two-row {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.job-step-btn.two-row .divider.full {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 40%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.job-step-btn.two-row .step-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 16px;
+}
+
+.job-step-btn.two-row .step-row .side-left {
+  width: 35%;
+}
+
+.job-step-btn.two-row .step-row .step-value {
+  text-align: right;
+  align-items: flex-end;
+  padding-right: 16px;
+}
+
+/* Footer */
+.job-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  padding-top: 12px;
+
+  border-top: 1px solid #bababa;
+}
+
+.job-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 12px;
+  border-radius: 20px;
+  font-size: 16px;
+}
+
+/* Approve */
+.status-approve,
+.status-sp-approve {
+  background: #EDE3FF;
+  border: 2px solid #7C3AED;
+  color: #000;
+}
+
+/* Warehouse Sending */
+.status-sending {
+  background: #CFDCFF;
+  border: 2px solid #1D4ED8;
+  color: #000;
+}
+
+/* Complete */
+.status-complete {
+  border: 2px solid #14A318;
+  background: #E6FFE7;
+  color: #000;
+}
+
+/* Pending */
+.status-pending {
+  background: #bababa;
+  color: #000;
+}
+
+.job-progress {
+  font-weight: 700;
+  color: #5a5a5a;
+  font-size: 18px;
+}
+
+/* Skeleton Loading */
+.skeleton-container {
+  width: 100%;
+}
+
+.skeleton-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 16px 8px 16px;
+  border: 1px solid #e5e7eb;
+  min-width: 300px;
+  width: 300px;
+  max-width: 300px;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+
+/* จอ tablet/ทั่วไป: คงเดิมที่ 4 ใบ (ลูกที่ 5-6 ที่เพิ่มเข้าไปในเทมเพลต ซ่อนไว้ก่อน) */
+.skeleton-card:nth-child(n+5) {
+  display: none;
+}
+
+/* จอคอม (กว้าง >=1400px) เท่านั้น: โชว์ครบ 6 ใบ */
+@media (min-width: 1400px) {
+  .skeleton-card:nth-child(n+5) {
+    display: block;
+  }
+}
+
+.skeleton-header,
+.skeleton-block,
+.skeleton-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-header {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.skeleton-chip,
+.skeleton-line,
+.skeleton-btn,
+.skeleton-step,
+.skeleton-pill {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.skeleton-chip {
+  width: 44px;
+  height: 28px;
+}
+
+.skeleton-line {
+  height: 16px;
+  width: 100%;
+}
+
+.skeleton-line.short {
+  width: 55%;
+}
+
+.skeleton-block {
+  margin: 12px 0;
+  min-height: 110px;
+  padding: 8px 0;
+}
+
+.skeleton-btn {
+  height: 42px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.skeleton-step {
+  height: 180px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.skeleton-footer {
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.skeleton-pill {
+  height: 24px;
+  width: 70%;
+}
+
+.skeleton-pill.short {
+  width: 40%;
+}
+
+@keyframes card-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes urgentBorderPulse {
+
+  0%,
+  100% {
+    border-color: #ff0000;
+    box-shadow: rgba(255, 61, 2, 0.5) 0px 8px 24px;
+  }
+
+  50% {
+    border-color: #fff;
+    box-shadow: none;
+  }
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes skeletonPulse {
+
+  0%,
+  100% {
+    opacity: 0.96;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.78;
+    transform: translateY(-1px);
+  }
+}
+
+/* Empty Stage */
+.empty-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+/*  Signature: บอร์ด manifest จำลอง -> เส้นสแกนไล่จากบนลงล่าง -> เครื่องหมายถูก "ประทับ" ลงมาตอนสแกนจบ
+    สื่อถึงตัวตนของแอป (QTrack = Scan · Track · Trust) ตรงๆ แทนไอคอนวงกลมทั่วไป เล่นครั้งเดียวตอนเข้าหน้า ไม่วนซ้ำ
+    กันรกตาถ้าไม่มีงานจริงแล้วต้องค้างหน้านี้นาน */
+.empty-board {
+  position: relative;
+  width: 112px;
+  height: 136px;
+  margin-bottom: 4px;
+  animation: empty-board-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+/*  คลิปบอร์ดบนสุด -> ยืนอยู่นอกกรอบ .empty-board-page ที่ overflow:hidden ไว้กันเส้นสแกนล้น เลยแยกชั้นกัน ไม่ให้โดนตัด */
+.empty-board::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 16px;
+  border-radius: 6px;
+  background: #25a3dd;
+  box-shadow: 0 2px 6px rgba(37, 163, 221, 0.35);
+  z-index: 2;
+}
+
+.empty-board-page {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #eef6fc);
+  box-shadow: 0 14px 32px rgba(37, 163, 221, 0.16), inset 0 0 0 1.5px #d6ecf9;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-board-scanline {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #25a3dd 20%, #8fdcf7 50%, #25a3dd 80%, transparent);
+  animation: empty-scan-sweep 0.9s ease-in-out 0.45s 1 both;
+}
+
+/*  เส้นบรรทัดว่างๆ แทนรายการ -> สื่อ "สแกนแล้ว ไม่มีอะไรอยู่ในลิสต์" ตรงตัว แทน checkmark ที่คนอ่านเป็น "เสร็จแล้ว" แทน "ไม่มี" */
+.empty-board-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 62px;
+  opacity: 0;
+  animation: empty-check-in 0.5s ease-out 1.15s 1 both;
+}
+
+.empty-board-lines span {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: #dbe9f4;
+}
+
+.empty-board-lines span:nth-child(1) { width: 100%; }
+.empty-board-lines span:nth-child(2) { width: 74%; }
+.empty-board-lines span:nth-child(3) { width: 46%; }
+
+@keyframes empty-board-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes empty-scan-sweep {
+  0% { top: 14px; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: calc(100% - 14px); opacity: 0; }
+}
+
+@keyframes empty-check-in {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.empty-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #181365;
+  margin: 4px 0 0;
+  opacity: 0;
+  animation: empty-text-in 0.4s ease-out 1.5s 1 both;
+}
+
+.empty-message {
+  font-size: 17px;
+  color: #6b70a0;
+  margin: 0;
+  max-width: 360px;
+  opacity: 0;
+  animation: empty-text-in 0.4s ease-out 1.62s 1 both;
+}
+
+@keyframes empty-text-in {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-board,
+  .empty-board-scanline,
+  .empty-board-lines,
+  .empty-title,
+  .empty-message {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* mat-form-field setup */
+::ng-deep .mat-mdc-text-field-wrapper {
+  height: 50px !important;
+  background-color: #d9d9d9 !important;
+}
+
+::ng-deep .mat-mdc-form-field-flex {
+  margin-top: -2px !important;
+}
+
+/* mat-form-field border setup */
+.mdc-notched-outline__leading,
+.mdc-notched-outline__notch,
+.mdc-notched-outline__trailing {
+  border-color: #bababa !important;
+  height: 50px !important;
+}
+
+/* mat-expansion-panel-header setup */
+::ng-deep .mat-expansion-panel-header {
+  height: 70px !important;
+}
+
+mat-form-field input.mat-mdc-input-element {
+  height: 20px !important;
+}
+
+.grade.completed,
+.grade-modal.completed {
+  background-color: #d1fae5;
+  color: #000;
+  border: 1px solid #86efac;
+}
+
+.check-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  margin-left: auto;
+}
+
+.grade {
+  display: flex;
+  align-items: center;
+}
+
+.grade-modal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.grade-modal .check-icon {
+  width: 28px;
+  height: 28px;
+  margin-left: 0;
+}

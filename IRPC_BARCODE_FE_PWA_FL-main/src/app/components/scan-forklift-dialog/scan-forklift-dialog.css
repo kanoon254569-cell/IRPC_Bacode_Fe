@@ -1,0 +1,316 @@
+::ng-deep .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: transparent;
+}
+
+/*
+  Concept: การ์ดขาวโมเดิร์นเรียบ ตามธีมแอป (login card / job-accept card / dialog อื่นล้วนพื้นขาว)
+  จุดเด่นเดียว: วงแหวนสแกน (pulse ring) รอบไอคอนรถ Forklift ตอนกำลังรอสแกน แทน motif ป้ายตรวจสภาพรถแบบเดิม
+*/
+.fl-gate {
+  --ink: #181365;
+  --ink-2: #283278;
+  --accent: #25a3dd;
+  --surface: #ffffff;
+  --surface-dim: #f3f5fb;
+  --ink-soft: #6b70a0;
+  --border: #e2e5f5;
+  --ok: #14a318;
+  --ok-tint: #e8f8ea;
+  --danger: #d92d20;
+  --danger-tint: #fbeae9;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(24, 19, 101, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, "Noto Sans Thai", sans-serif;
+}
+
+.fl-tag {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 40px 38px 34px;
+  box-shadow: 0 24px 60px rgba(24, 19, 101, 0.22);
+  transition: box-shadow 0.2s ease;
+}
+
+.fl-tag--error {
+  animation: fl-shake 0.4s ease;
+}
+
+.fl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.fl-eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.fl-mode-toggle {
+  font-size: 12px;
+  --mdc-switch-selected-track-color: var(--accent);
+  --mdc-switch-selected-hover-track-color: var(--accent);
+  --mdc-switch-selected-focus-track-color: var(--accent);
+  --mdc-switch-selected-handle-color: var(--ink);
+  --mdc-switch-selected-hover-handle-color: var(--ink);
+  --mdc-switch-selected-focus-handle-color: var(--ink);
+  --mdc-switch-unselected-track-color: #dfe2f5;
+  --mdc-switch-unselected-handle-color: #a7abd6;
+}
+
+.fl-mode-toggle ::ng-deep .mdc-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.fl-title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.fl-sub {
+  margin: 0 0 28px;
+  font-size: 16px;
+  color: var(--ink-soft);
+}
+
+.fl-hidden-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*  ไอคอน Forklift ในวงกลม + วงแหวนสแกนขยายจางออกตอนกำลังรอ (จุดเด่นหลักของ modal นี้) */
+.fl-icon-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  margin-bottom: 24px;
+}
+
+.fl-icon-ring {
+  position: absolute;
+  width: 172px;
+  height: 172px;
+  border-radius: 24px;
+  border: 2px solid var(--accent);
+  animation: fl-pulse-ring 2s cubic-bezier(0.2, 0.7, 0.4, 1) infinite;
+}
+
+.fl-icon-ring--delay {
+  animation-delay: 1s;
+}
+
+.fl-icon-circle {
+  position: relative;
+  width: 172px;
+  height: 172px;
+  border-radius: 24px;
+  background: var(--surface-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease;
+}
+
+.fl-icon-circle--ok {
+  background: var(--ok-tint);
+}
+
+.fl-icon-circle--err {
+  background: var(--danger-tint);
+}
+
+.fl-icon {
+  width: 118px;
+  height: 118px;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.fl-icon-glyph {
+  font-size: 68px;
+  font-weight: 700;
+  line-height: 1;
+  animation: fl-glyph-in 0.3s ease;
+}
+
+.fl-icon-circle--ok .fl-icon-glyph {
+  color: var(--ok);
+}
+
+.fl-icon-circle--err .fl-icon-glyph {
+  color: var(--danger);
+}
+
+.fl-scan-button {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 20px 24px;
+  font-size: 21px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.fl-scan-button:active {
+  transform: scale(0.98);
+}
+
+.fl-scan-button.scanning {
+  background: #1ea64b;
+}
+
+.fl-manual-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.fl-manual-input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--surface-dim);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 16px;
+  padding: 14px 16px;
+  color: var(--ink);
+}
+
+.fl-manual-input::placeholder {
+  color: #a7abd6;
+}
+
+.fl-manual-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.fl-manual-submit {
+  border: none;
+  border-radius: 14px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 15px 22px;
+  cursor: pointer;
+}
+
+.fl-manual-submit:hover {
+  background: var(--ink-2);
+}
+
+.fl-status-slot {
+  display: flex;
+  justify-content: center;
+}
+
+.fl-chip {
+  margin: 16px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 9px 20px;
+  border-radius: 999px;
+  text-align: center;
+}
+
+.fl-chip--error {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.fl-chip--success {
+  color: var(--ok);
+  background: var(--ok-tint);
+}
+
+@keyframes fl-pulse-ring {
+  0%   { transform: scale(0.82); opacity: 0.9; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+@keyframes fl-glyph-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fl-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.fl-cancel-link {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 14px;
+  padding: 16px 20px;
+  background: var(--surface-dim);
+  border: none;
+  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.fl-cancel-link:hover {
+  background: #e7eafa;
+}
+
+.fl-cancel-link:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-icon-ring {
+    display: none;
+  }
+
+  .fl-tag--error {
+    animation: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .fl-tag {
+    padding: 24px 20px 20px;
+  }
+}

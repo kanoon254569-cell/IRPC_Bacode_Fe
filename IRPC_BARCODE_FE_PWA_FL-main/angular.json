@@ -1,0 +1,112 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "packageManager": "npm",
+    "analytics": "b4945a13-3dc0-4c4d-9700-d778d4986a37"
+  },
+  "newProjectRoot": "projects",
+  "projects": {
+    "IRPC_QRCODE_SYSTEM_FL_PWA": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "standalone": false
+        },
+        "@schematics/angular:directive": {
+          "standalone": false
+        },
+        "@schematics/angular:pipe": {
+          "standalone": false
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              },
+              "src/assets",
+              "src/manifest.webmanifest"
+            ],
+            "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "@angular/material/prebuilt-themes/azure-blue.css",
+              "node_modules/driver.js/dist/driver.css",
+              "src/assets/fonts/Roboto/roboto.css",
+              "src/assets/fonts/material-icons/material-icons.css",
+              "src/styles.css"
+            ],
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+            "allowedCommonJsDependencies": [
+              "sweetalert2"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "baseHref": "/app-forklift/",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2MB",
+                  "maximumError": "3MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
+                }
+              ],
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ]
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "IRPC_QRCODE_SYSTEM_FL_PWA:build:development",
+            "host": "0.0.0.0",
+            "allowedHosts": [
+              ".ngrok-free.app"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "IRPC_QRCODE_SYSTEM_FL_PWA:build:production"
+            },
+            "development": {
+              "buildTarget": "IRPC_QRCODE_SYSTEM_FL_PWA:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
+        }
+      }
+    }
+  }
+}

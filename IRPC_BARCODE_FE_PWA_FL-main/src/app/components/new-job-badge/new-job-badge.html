@@ -1,0 +1,39 @@
+<div class="new-job-badge-container" *ngIf="(unseenJobs$ | async) as jobs">
+    <div class="new-job-badge-panel" *ngIf="isPanelOpen && jobs.length > 0">
+        <div class="new-job-badge-panel-header">
+            <div class="new-job-badge-panel-header-text">
+                <div>งานใหม่ ({{ jobs.length }})</div>
+                <div class="new-job-badge-panel-date">{{ todayDisplay }}</div>
+            </div>
+            <button type="button" class="new-job-badge-clear-all" (click)="onClickClearAll()">อ่านแล้วทั้งหมด</button>
+        </div>
+        <div class="new-job-badge-list">
+            <div class="new-job-badge-item" [class.urgent]="job.isUrgent"
+                [style.animation-delay]="job.isUrgent ? job.pulseDelay : null"
+                *ngFor="let job of jobs">
+                <div class="new-job-badge-tag" [ngClass]="{
+                    'tag-in': job.jobTag === 'IN',
+                    'tag-out': job.jobTag === 'OUT',
+                    'tag-rq': job.jobTag === 'RQ',
+                    'tag-bk': job.jobTag === 'BK',
+                    'tag-sp': job.jobTag === 'SP',
+                    'tag-it': job.jobTag === 'IT',
+                    'tag-tw': job.jobTag === 'TW'
+                }">{{ job.jobTag }}</div>
+                <div class="new-job-badge-item-text">
+                    <div class="new-job-badge-item-system-no">{{ job.systemNo }}</div>
+                    <div class="new-job-badge-item-type">{{ job.typeName }}</div>
+                </div>
+                <div class="urgent-icon" *ngIf="job.isUrgent" aria-label="urgent job" title="Urgent">
+                    <img src="assets/images/siren.png" alt="urgent">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" class="new-job-badge-button" *ngIf="jobs.length > 0" (click)="togglePanel()">
+        <span class="new-job-badge-pulse-ring"></span>
+        <mat-icon class="new-job-badge-bell-icon">notifications</mat-icon>
+        <span class="new-job-badge-count">{{ jobs.length }}</span>
+    </button>
+</div>

@@ -1,0 +1,110 @@
+<div class="login-page">
+    <!-- Left : Login Image -->
+    <div class="login-left">
+        <img src="assets/images/LoginBanner.png" alt="login-bg" />
+    </div>
+
+    <!-- Roght : Login Card -->
+    <div class="login-right">
+
+        <!-- หน้านี้ไม่มี <app-header> เลย -> ต้องมีตัวเช็คเน็ตของตัวเอง (pattern เดียวกับ header.component)
+             ปักไว้บนสุดเต็มความกว้างของ panel ขวาเสมอ ให้เห็นชัดทันทีไม่ต้องมองหา -->
+        <div class="login-network-status" *ngIf="!_isOnline">
+            <mat-icon>wifi_off</mat-icon>
+            <span>ไม่มีสัญญาณ</span>
+        </div>
+
+        <div class="login-card">
+
+            <!-- Login Logo -->
+            <!-- padding-top เฉพาะตอนแถบไม่มีสัญญาณโผล่มา (position: absolute ทับอยู่) กันไม่ให้บัง logo -->
+            <div class="login-logo" [class.network-offline]="!_isOnline">
+                <img src="assets/images/irpc-logo.png" alt="irpc-Logo" />
+                <br>
+                <img src="assets/images/qtrack-logo.png" alt="qtrack-Logo"/>
+            </div>
+
+            <!-- Login Title -->
+            <div class="login-header">
+                <div class="project-name">
+                <strong>IRPC - Q Track : Forklift</strong>
+                </div>
+                <div class="login-title">USER LOGIN</div>
+            </div>
+
+            <!-- Login Mode Tabs -->
+            <div class="login-tabs">
+                <button type="button" class="login-tab" [class.active]="_loginMode === 'normal'"
+                    (click)="onSelectLoginMode('normal')">
+                    เข้าสู่ระบบ
+                </button>
+                <button type="button" class="login-tab" [class.active]="_loginMode === 'qr'"
+                    (click)="onSelectLoginMode('qr')">
+                    สแกน QR Code
+                </button>
+            </div>
+
+            <!-- Login Form (ปกติ) -->
+            <div class="login-from" *ngIf="_loginMode === 'normal'">
+
+                <!-- Username -->
+                <mat-form-field class="username example-full-width" appearance="outline">
+                    <mat-label>Username</mat-label>
+                    <input matInput type="text" [formControl]="_mUsername" autocomplete="off"
+                        (keydown)="onKeyDown($event)" />
+                </mat-form-field>
+
+                <!-- Password -->
+                <mat-form-field class="password example-full-width" appearance="outline">
+                    <mat-label>Password</mat-label>
+                    <input matInput [type]="_showPassword ? 'text' : 'password'" [formControl]="_mPassword"
+                        (keydown)="onKeyDown($event)" />
+                    <button mat-icon-button matSuffix type="button" (click)="_showPassword = !_showPassword">
+                        <mat-icon>{{
+                            _showPassword ? "visibility_off" : "visibility"
+                            }}</mat-icon>
+                    </button>
+                </mat-form-field>
+
+            </div>
+
+            <!-- Login Button (ปกติ) -->
+            <div class="login-submit" *ngIf="_loginMode === 'normal'">
+                <button type="submit" (click)="onClickSubmit()" class="submit-btn">
+                    เข้าสู่ระบบ
+                </button>
+            </div>
+
+            <!-- Login แบบสแกน QR Code (ปืนสแกน ไม่ใช่กล้อง) -->
+            <div class="qr-login" *ngIf="_loginMode === 'qr'">
+                <!-- ช่องรับค่าจากเครื่องสแกน (ซ่อนไว้) -> โฟกัสหลุดเมื่อไปกดที่อื่นจะดึงกลับมาเอง (ยกเว้นตอนมี dialog/Swal เปิดอยู่) -->
+                <input #qrScannerInput type="text" class="qr-hidden-input" [(ngModel)]="_qrScannerValue"
+                    (keyup.enter)="onQrScannerEnter()" (blur)="onQrInputBlur()" autocomplete="off" autocorrect="off"
+                    autocapitalize="off" spellcheck="false" inputmode="none" />
+
+                <div class="qr-icon-stage">
+                    <span class="qr-icon-ring" *ngIf="_isQrScanning"></span>
+                    <span class="qr-icon-ring qr-icon-ring--delay" *ngIf="_isQrScanning"></span>
+                    <div class="qr-icon-circle">
+                        <mat-icon class="qr-login-icon">qr_code_scanner</mat-icon>
+                    </div>
+                </div>
+
+                <p class="qr-login-hint">ยิงปืนสแกนไปที่ QR Code เพื่อเข้าสู่ระบบ</p>
+
+                <div class="login-submit">
+                    <button type="button" (click)="onClickQrScanButton()" class="submit-btn"
+                        [class.scanning]="_isQrScanning">
+                        {{ _isQrScanning ? 'กำลังสแกน…' : 'กดปุ่มเพื่อสแกน' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Login Footer -->
+            <div class="footer">
+                <!-- V-19.0.0 UAT 22/10/2026 -->
+                20261125 v1.0
+            </div>
+        </div>
+    </div>
+</div>

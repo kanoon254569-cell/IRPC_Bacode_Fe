@@ -1,0 +1,326 @@
+<div #screen class="d-flex flex-column load-to-truck-screen">
+    <app-header></app-header>
+
+    <div class="row p-2 g-2 flex-grow-1 m-0 load-to-truck-row">
+
+        <!-- Left Side -->
+        <div class="col-md-5 d-flex flex-column load-to-truck-col">
+
+            <!-- Shipment Number Section -->
+            <div class="system-number-card">
+                <div class="system-number-card-header">
+
+                    <!-- Back Button -->
+                    <button class="back-button" (click)="onClickBack()">
+                        <img src="assets/images/Arrow.png" alt="back-icon">
+                    </button>
+
+                    Load ของขึ้นรถ
+
+                    <img src="assets/images/truck.png" alt="truck-icon">
+
+                </div>
+
+                <div class="system-number-card-content">
+                    <ng-container *ngIf="job.shipmentNo !== '-'; else noJobBlock">
+
+                        <div class="job-tag" [ngClass]="{
+                                'tag-in': job.jobTag === 'IN',
+                                'tag-out': job.jobTag === 'OUT',
+                                'tag-rq': job.jobTag === 'RQ',
+                                'tag-bk': job.jobTag === 'BK'
+                            }">
+                            {{ job.jobTag }}
+                        </div>
+
+                        <div class="job-number">{{ job.shipmentNo }}</div>
+
+                    </ng-container>
+
+                    <ng-template #noJobBlock>
+                        <div class="no-job-text">ยังไม่มีข้อมูล SM</div>
+                    </ng-template>
+                </div>
+            </div>
+
+            <!-- Scanner Section -->
+            <div class="scanner-container">
+                <div class="scanner-container-header">
+                    <div class="scanner-container-header-left">
+                        <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                        Scan Bag
+                    </div>
+
+                    <div class="scanner-container-header-right">
+                        <!-- Manual Input Mode Toggle -->
+                        <mat-slide-toggle class="manual-mode-toggle" [(ngModel)]="_isManualInputMode"
+                            (change)="onToggleManualInputMode($event.checked)">
+                            พิมพ์
+                        </mat-slide-toggle>
+                    </div>
+                </div>
+
+                <!-- Hidden Scanner Input (Plain HTML) -->
+                <input #scannerInput type="text" class="hidden-scanner-field" [(ngModel)]="_scannerValue"
+                    (keyup.enter)="onScannerEnter()" autocomplete="off" autocorrect="off" autocapitalize="off"
+                    spellcheck="false" inputmode="none" />
+
+                <!-- Scan Mode: ปุ่มสแกนปกติ -->
+                <div class="scan-actions" *ngIf="!_isManualInputMode">
+                    <button type="button" class="scan-qr-button" [class.scanning]="_isScanning"
+                        (click)="onClickScanButton()">
+                        <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                        {{ _isScanning ? 'กำลังสแกน...' : 'Scan Qr Code' }}
+                    </button>
+
+                    <button type="button" class="clear-check-button" (click)="onClickClearCheckList()"
+                        title="ล้าง checkbox">
+                        X
+                    </button>
+                </div>
+
+                <!-- Manual Input Mode: ช่องพิมพ์เอง -->
+                <div class="scan-actions" *ngIf="_isManualInputMode">
+                    <input type="text" class="manual-input-field" [(ngModel)]="_manualInputValue"
+                        placeholder="พิมพ์รหัส Pallet หรือ QR รถ" (keyup.enter)="onClickSubmitManualInput()"
+                        autocomplete="off" />
+
+                    <button type="button" class="manual-input-submit" (click)="onClickSubmitManualInput()">
+                        ยืนยัน
+                    </button>
+                </div>
+
+                <!-- Hint เมื่อมี Pallet รอขึ้นรถ -->
+                <!-- <div class="scan-hint" *ngIf="_palletToLoadList.length > 0">
+        มี {{ _palletToLoadList.length }} Pallet รอขึ้นรถ &mdash; กรุณาสแกน QR Code ที่รถเพื่อยืนยันการโหลด
+    </div> -->
+            </div>
+
+            <!-- Pallet รอเอาไปวาง (รอขึ้นรถ) Section -->
+            <div class="scaned-palet-card">
+                <div class="scaned-palet-card-header">
+                    <img src="assets/images/box.png" alt="box-icon">
+                    Pallet ที่รอขึ้นรถ : {{ _palletToLoadList.length }} Pallet
+                </div>
+
+                <div class="scaned-palet-card-content">
+
+                    <!-- Empty State -->
+                    <div class="scaned-palet-empty" *ngIf="_palletToLoadList.length === 0">
+                        <img src="assets/images/empty-pallet.png" alt="empty-pallet">
+                        <div class="scaned-palet-empty-title">ยังไม่มี Pallet ที่ Verify</div>
+                        <div class="scaned-palet-empty-sub">สามารถ Verify Pallet ได้โดยการ Scan QR Code</div>
+                    </div>
+
+                    <!-- Pallet List -->
+                    <div class="scaned-palet-item" *ngFor="let pallet of _palletToLoadList"
+                        [class.selected-placement]="pallet.isSelectedForPlacement">
+
+                        <div class="scaned-palet-item-top">
+                            <div class="pallet-icon-box">
+                                <img src="assets/images/pallet.png" alt="pallet">
+                                <img class="check-badge" src="assets/images/check.png" alt="check"
+                                    *ngIf="pallet.isChecked">
+                            </div>
+                            <div class="pallet-info">
+                                <div class="pallet-grade-line">
+                                    {{ pallet.grade }} &bull; {{ pallet.lotNo }} &bull; {{ pallet.qty | number }} กก.
+                                </div>
+                                <!-- ไม่โชว์ id: ค่าเป็นเลขพาเลทจากโค้ดที่ตัด 0 หน้า (ไม่ใช่ id จริงในระบบ และซ้ำกับหมายเลขพาเลท) -->
+                                <div class="pallet-id-line">หมายเลขพาเลท : {{ palletNos(pallet.qrCodes) || '-' }} &bull; {{ palletModeLabel(pallet) }}</div>
+                            </div>
+
+                            <!-- ปุ่มลบ Pallet (ลบแค่ฝั่ง client เท่านั้น ยังไม่เคยยิง API ใดๆ ตอนสแกน) -->
+                            <button type="button" class="pallet-delete-button"
+                                (click)="onClickDeletePallet(pallet); $event.stopPropagation()">
+                                -
+                            </button>
+                        </div>
+
+                        <div class="scaned-palet-item-footer"
+                            [class.selected-placement-footer]="pallet.isSelectedForPlacement">
+                            <span>สแกน QR รถเพื่อยืนยันการโหลด</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="col-md-7 d-flex flex-column load-to-truck-col">
+
+            <!-- Progress Bar -->
+            <div class="progress-bar-container">
+                <div class="progress-bar-header">
+                    <div class="progress-bar-header-left">
+                        <img src="assets/images/box.png" alt="box-icon">
+                        Pallet ที่เสร็จแล้ว
+                    </div>
+
+                    <div class="progress-bar-header-right">
+                        <span class="badge-dot badge-complete">
+                            <span class="dot"></span> Complete {{ _completedQty | number }} {{ _qtyUnit }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="progress-bar-body">
+                    <div class="progress-header">
+                        <div class="progress-bar-percent">{{ _completePercent }}%</div>
+                        <div class="progress-bar-label">Progress Bar</div>
+                        <div class="progress-bar-fraction">{{ _completedQty | number }}/{{ _totalQty | number }} {{ _qtyUnit }}</div>
+                    </div>
+
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill-complete" [style.width.%]="_completePercent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Pallet Container -->
+            <div class="total-pallet-card">
+                <div class="total-pallet-card-header">
+                    <div class="total-pallet-card-header-left">
+                        <img src="assets/images/box.png" alt="box-icon">
+                        ทั้งหมด : {{ _totalQty | number }} {{ _qtyUnit }}
+                    </div>
+
+                    <div class="total-pallet-card-header-right">
+                        <span class="badge-dot badge-done"><span class="dot"></span> สินค้าจัดวางสำเร็จ</span>
+                        <button type="button" class="expand-all-button" (click)="onClickExpandAll()">Expand All</button>
+                        <button type="button" class="collapse-all-button" (click)="onClickCollapseAll()">Collapse
+                            All</button>
+                    </div>
+                </div>
+
+                <div class="total-pallet-card-content">
+
+                    <ng-container *ngIf="_doGroups.length > 0; else noJobDoBlock">
+                        <!-- DO Group (Accordion) -->
+                        <div class="do-group" *ngFor="let group of _doGroups">
+                            <div class="do-group-header" (click)="onToggleDoGroup(group.doNo)">
+                                <div class="do-group-header-left">
+                                    <span class="do-group-title">DO - {{ group.doNo }}</span>
+                                    <span>: {{ group.headerLabel }}</span>
+                                    <span class="do-group-more" *ngIf="group.extraItemsCount > 0">
+                                        + {{ group.extraItemsCount }} more
+                                    </span>
+                                </div>
+
+                                <div class="do-group-header-right">
+                                    {{ group.completedCount | number }} / {{ group.totalCount | number }} {{ _qtyUnit }}
+                                    <img class="do-group-chevron" [class.expanded]="group.expanded"
+                                        src="assets/images/Arrow.png" alt="expand-icon">
+                                </div>
+                            </div>
+
+                            <div class="do-group-body" *ngIf="group.expanded">
+                                <!-- Empty State: DO นี้ยังไม่มีพาเลทที่โหลดขึ้นรถเลย (ไม่มีแถว "รอโหลด" ที่เดาจำนวนพาเลทแล้ว) -->
+                                <div class="scaned-palet-empty do-group-empty" *ngIf="group.pallets.length === 0">
+                                    <img src="assets/images/empty-pallet.png" alt="empty-pallet">
+                                    <div class="scaned-palet-empty-title">ยังไม่มี Pallet ที่โหลดเข้า DO นี้</div>
+                                    <div class="scaned-palet-empty-sub">สแกนถุง แล้วสแกน QR รถเพื่อโหลด</div>
+                                </div>
+
+                                <div class="total-pallet-row row-tint-done" *ngFor="let p of group.pallets">
+                                    <div class="total-pallet-row-icon">
+                                        <img src="assets/images/pallet.png" alt="pallet">
+                                    </div>
+
+                                    <div class="total-pallet-row-info">
+                                        <div class="total-pallet-row-grade">
+                                            {{ p.grade }} &bull; {{ p.lotNo }} &bull; {{ isNumberQty(p.qty) ? (p.qty |
+                                            number) : p.qty }}
+                                        </div>
+                                        <div class="total-pallet-row-id">หมายเลขพาเลท : {{ p.palletNo || '-' }} &bull; id : {{ p.id ?? 'รอ Verify' }}</div>
+                                    </div>
+
+                                    <button type="button" class="total-pallet-row-status status-done">
+                                        ✓ สินค้าจัดวางสำเร็จ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <ng-template #noJobDoBlock>
+                        <div class="no-do-text">ยังไม่มีข้อมูล SM</div>
+                    </ng-template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal นับถุง (ย่อจากหน้า scan-pallet งานกลุ่ม kilo ไม่มี toggle เอาออก/จัดเก็บ ไม่มีส่งให้ Step 2) -->
+    <div class="special-qty-modal-overlay" *ngIf="_bagModal">
+        <div class="special-qty-modal">
+            <div class="special-qty-modal-header">
+                <span>สแกนถุง (Pallet id: {{ _bagModal.parsed.palletId }})</span>
+                <button type="button" class="special-qty-modal-close" (click)="onCloseBagModal()">&times;</button>
+            </div>
+
+            <div class="special-qty-modal-body">
+                <div class="special-qty-modal-gradelot">
+                    {{ _bagModal.parsed.grade }} &bull; {{ _bagModal.parsed.lot }}
+                </div>
+                <div class="special-qty-modal-progress">
+                    สแกนแล้ว {{ _bagModalQty | number }} กก. ({{ _bagModal.scannedCodes.length }} ถุง)
+                    <ng-container *ngIf="_bagModal.remaining !== null">&bull; เหลือ {{ (_bagModal.remaining - _bagModalQty) | number }} กก.</ng-container>
+                    &bull; พาเลทนี้มี {{ _bagModal.record.qty | number }} กก.
+                </div>
+
+                <!-- พาเลทใบแรก ยังไม่รู้ Shipment -> ยังไม่รู้ยอดที่เหลือ ไปเช็คตอนสแกนรถ -->
+                <div class="special-qty-modal-hint-instruction" *ngIf="_bagModal.remaining === null">
+                    ยังไม่รู้ยอดที่ต้องโหลด จะเช็คอีกครั้งตอนสแกน QR รถ
+                </div>
+
+                <!-- เปิดจากตอนสแกนรถ: การ์ดที่รอเกินยอดที่เหลือ -->
+                <div class="special-qty-modal-hint-instruction" *ngIf="_bagModal.pallet">
+                    พาเลทนี้เกินยอดที่ต้องโหลด (เหลือ {{ _bagModal.remaining | number }} กก.) กรุณานับถุงไม่เกิน {{ _bagModal.remaining | number }} กก. แล้วกดยืนยันเพื่อโหลดขึ้นรถ
+                </div>
+
+                <div class="special-select-all-row" *ngIf="_bagModalCanSelectAll">
+                    <button type="button" class="special-select-all-button" (click)="onClickBagModalSelectAll()">
+                        เลือกทั้งหมด (เอาทั้งพาเลท {{ _bagModal.record.qty | number }} กก.)
+                    </button>
+                </div>
+
+                <div class="special-manual-toggle-row">
+                    <mat-slide-toggle [(ngModel)]="_isManualInputMode"
+                        (change)="onToggleManualInputMode($event.checked)">
+                        พิมพ์
+                    </mat-slide-toggle>
+                </div>
+
+                <button type="button" class="special-bag-scan-button" *ngIf="!_isManualInputMode"
+                    [class.scanning]="_isScanning" (click)="onClickScanButton()">
+                    <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                    {{ _isScanning ? 'กำลังสแกน...' : 'กดเพื่อสแกนถุงเพิ่ม' }}
+                </button>
+
+                <div class="special-manual-input-row" *ngIf="_isManualInputMode">
+                    <input type="text" class="manual-input-field" [(ngModel)]="_manualInputValue"
+                        placeholder="พิมพ์รหัสถุง" (keyup.enter)="onClickSubmitManualInput()" autocomplete="off" />
+                    <button type="button" class="manual-input-submit" (click)="onClickSubmitManualInput()">
+                        ยืนยัน
+                    </button>
+                </div>
+
+                <div class="special-scanned-bag-list">
+                    <div class="special-scanned-bag-row" *ngFor="let c of _bagModal.scannedCodes">
+                        <span>{{ c }}</span>
+                        <button type="button" (click)="onRemoveBag(c)">&times;</button>
+                    </div>
+                </div>
+
+                <div class="special-qty-modal-hint" *ngIf="_bagModal.hint">{{ _bagModal.hint }}</div>
+
+                <div class="special-qty-modal-actions">
+                    <button type="button" class="special-qty-modal-confirm" (click)="onConfirmBagModal()">
+                        {{ _bagModal.pallet ? 'ยืนยันและโหลดขึ้นรถ' : 'ยืนยัน' }} ({{ _bagModal.scannedCodes.length }} ถุง)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

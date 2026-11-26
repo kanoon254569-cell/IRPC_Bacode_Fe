@@ -1,0 +1,406 @@
+<div class="page-container">
+  <app-header></app-header>
+
+  <section class="control-bar">
+    <div class="control-left-section">
+      <button class="back-wh-btn" routerLink="/system-menu">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="title-headers">
+        <h1 class="page-title">รายการแจ้งเปลี่ยนถุงแตก</h1>
+        <p class="page-subtitle">Scan Grade, Lot อย่างละถุงแล้วใส่จำนวนเพื่อแจ้งเปลี่ยนถุง</p>
+      </div>
+    </div>
+    <div class="control-right-section">
+
+      <!-- Status Filter -->
+      <!-- floatLabel=always: ค่าเริ่มต้นเป็น "ทั้งหมด" (ไม่มี selection) label เลยไม่ลอยเอง ต้องบังคับให้ลอยมุมซ้ายบน -->
+      <mat-form-field appearance="fill" class="filter" floatLabel="always">
+        <mat-label>Status</mat-label>
+        <mat-select multiple placeholder="ทั้งหมด" [(value)]="_selectedStatus" (selectionChange)="onFilterChange()">
+          <!-- ไม่ได้เลือกอะไร = แสดงงานทุกสถานะ -> โชว์คำว่า "ทั้งหมด" ให้ชัด -->
+          <mat-select-trigger>
+            {{ _selectedStatus.length === 0 ? 'ทั้งหมด' : statusTriggerText() }}
+          </mat-select-trigger>
+          <mat-option *ngFor="let status of _statusOptions()" [value]="status">
+            {{ status }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Date Filter -->
+      <mat-form-field appearance="fill" class="filter">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="brokenDatePicker" [(ngModel)]="_selectedDate" (dateChange)="onFilterChange()" readonly>
+        <button *ngIf="_selectedDate" mat-icon-button matSuffix (click)="_selectedDate = null; onFilterChange()" aria-label="Clear date">
+          <mat-icon>close</mat-icon>
+        </button>
+        <mat-datepicker-toggle matSuffix [for]="brokenDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #brokenDatePicker></mat-datepicker>
+      </mat-form-field>
+
+      <button class="btn-green" (click)="openModal()">
+        <mat-icon>add</mat-icon> เพิ่มแจ้งเปลี่ยนถุงแตก
+      </button>
+    </div>
+  </section>
+
+  <div class="content-area">
+    <div class="empty-state" *ngIf="_isLoading()">
+      -- กำลังโหลดข้อมูล... --
+    </div>
+
+    <ng-container *ngIf="!_isLoading()">
+      <div class="empty-state" *ngIf="filteredBrokenJobs().length === 0">
+        {{ _allBrokenJobs().length === 0 ? '-- ยังไม่มีรายการแจ้งเปลี่ยนถุงแตก --' : '-- ไม่พบรายการตามเงื่อนไข Status หรือ Date ที่เลือก --' }}
+      </div>
+
+      <div class="job-card" *ngFor="let job of filteredBrokenJobs()">
+        <div class="card-main">
+          <div class="job-row-top">
+            <div class="bag-icon-wrapper">
+              <img src="assets/images/BrokenBag.png" alt="Broken Bag" class="broken-bag-image">
+            </div>
+
+            <div class="job-info">
+              <h2 class="job-title"><span class="job-title-main">{{ job.systemNo }}</span><span class="job-title-meta">SM {{ job.sm }} &middot; DO {{ job.do }}</span></h2>
+              <p class="job-desc">{{ bagsSummary(job) }}</p>
+            </div>
+          </div>
+
+          <!-- Timeline จาก backend (steps[]) -->
+          <div class="state-tracker">
+            <ng-container *ngFor="let step of job.steps; let last = last">
+              <div class="step" [class.step-completed]="step.status === 'done'" [class.step-current]="step.status === 'active'" [class.step-pending]="step.status === 'pending'">
+                <div class="step-dot">
+                  <mat-icon *ngIf="step.status === 'done'" class="step-check-icon">check</mat-icon>
+                  <span *ngIf="step.status === 'active'" class="step-inner-dot"></span>
+                </div>
+
+                <span class="step-label">{{ step.title }}<br>
+                  <small>{{ step.subtitle }}</small>
+                </span>
+              </div>
+              <div class="step-line" [class.step-line-completed]="step.status === 'done'" *ngIf="!last"></div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- นำของขึ้นรถสำเร็จแล้ว -> จบ flow โชว์ปุ่ม "สำเร็จ" เฉยๆ -->
+        <button *ngIf="isJobComplete(job)" class="btn-blue-large btn-blue-large--done" disabled>
+          <span class="btn-icon-badge"><mat-icon>check_circle</mat-icon></span>
+          <span>สำเร็จ</span>
+        </button>
+
+        <!-- เปลี่ยนถุงแตกสำเร็จแล้ว (แต่ยังไม่นำของขึ้นรถ) -> โชว์ปุ่ม "นำของขึ้นรถ" แทน -->
+        <button *ngIf="!isJobComplete(job) && canLoadToTruck(job)" class="btn-blue-large btn-blue-large--green" (click)="onLoadToTruck(job)">
+          <span class="btn-icon-badge"><mat-icon>local_shipping</mat-icon></span>
+          <span>นำของขึ้นรถ</span>
+        </button>
+
+        <!-- กดได้เฉพาะตอน status_id === 3 (ขั้น "ตรวจสอบถุง") -->
+        <button *ngIf="!isJobComplete(job) && !canLoadToTruck(job)" class="btn-blue-large"
+                [class.btn-blue-large--active]="canChangeWithWarehouse(job)"
+                [disabled]="!canChangeWithWarehouse(job)"
+                (click)="onChangeWithWarehouse(job)">
+          <span class="btn-icon-badge"><mat-icon>sync</mat-icon></span>
+          <span>เปลี่ยนของ</span>
+        </button>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="modal custom-modal-overlay" tabindex="-1" [class.show]="_showModal()">
+    <div class="modal-dialog modal-dialog-centered scan-modal-dialog">
+      <div class="modal-content scan-modal-content">
+        <div class="modal-body scan-modal-body">
+          <!-- ช่องรับค่าจากเครื่องสแกน (ซ่อนไว้) — ใช้ร่วมกันทั้งขั้นสแกน Truck/Dock และขั้นสแกนถุง -->
+          <input #addModalScannerInput type="text" class="wh-hidden-scanner" [(ngModel)]="_scannerValue"
+            (keyup.enter)="onScannerEnter()" autocomplete="off" autocorrect="off" autocapitalize="off"
+            spellcheck="false" inputmode="none" />
+
+          <div class="scan-modal-header">
+            <div class="scan-modal-titles">
+              <h4 class="scan-modal-title">เพิ่มรายการแจ้งเปลี่ยนถุงแตก</h4>
+              <p class="scan-modal-shipment-meta" *ngIf="_scanState() === 'table'">
+                SM: {{ _shipmentSm || '-' }} &bull; DO: {{ _lockedDoNo || '-' }}
+              </p>
+              <p class="scan-modal-subtitle">
+                {{ _scanState() === 'table' ? 'Scan ถุงที่แตก Grade และ Lot อย่างละถุงแล้วมาใส่จำนวนเพื่อแจ้งเปลี่ยนถุงแตก' : 'Scan QR รถเพื่อค้นหา SM และ DO' }}
+              </p>
+            </div>
+            <div class="scan-modal-header-actions">
+              <mat-slide-toggle class="wh-manual-toggle" [(ngModel)]="_manualMode" (change)="onToggleManual($event.checked)">
+                พิมพ์
+              </mat-slide-toggle>
+              <button class="btn-yellow" [class.scanning]="_scanState() === 'table' ? _isScanningBag() : _isScanningDockTruck()"
+                      *ngIf="!_manualMode" (click)="onClickScanButton()">
+                <mat-icon>qr_code_scanner</mat-icon>
+                {{ (_scanState() === 'table' ? _isScanningBag() : _isScanningDockTruck()) ? 'กำลังสแกน...' : 'Scan QR Code' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="wh-manual-row" *ngIf="_manualMode">
+            <input type="text" class="wh-manual-input" [(ngModel)]="_manualValue"
+              [placeholder]="_scanState() === 'table' ? 'พิมพ์รหัสถุง เช่น 1234|GRADE|LOT|01|001' : 'พิมพ์รหัสรถ เช่น carrierCode|licensePlate'"
+              (keyup.enter)="onSubmitManual()" autocomplete="off" />
+            <button type="button" class="wh-manual-submit" (click)="onSubmitManual()">ยืนยัน</button>
+          </div>
+
+          <div class="modal-inner-container">
+            <div class="scan-area" *ngIf="_scanState() === 'scan' || _scanState() === 'success'">
+              <!-- Icon stage + วงแหวน pulse ตอนกำลังสแกน (แนวทางเดียวกับ scan-forklift-dialog) -->
+              <div class="dt-icon-stage">
+                <span class="dt-icon-ring" *ngIf="_scanState() === 'scan' && _isScanningDockTruck()"></span>
+                <span class="dt-icon-ring dt-icon-ring--delay" *ngIf="_scanState() === 'scan' && _isScanningDockTruck()"></span>
+                <div class="dt-icon-circle" [class.dt-icon-circle--ok]="_scanState() === 'success' && !_isFetchingShipment()">
+                  <mat-icon *ngIf="_scanState() === 'scan'" class="dt-icon">filter_center_focus</mat-icon>
+                  <span class="dt-loading-spinner" *ngIf="_isFetchingShipment()"></span>
+                  <span *ngIf="_scanState() === 'success' && !_isFetchingShipment()" class="dt-icon-glyph">&#10003;</span>
+                </div>
+              </div>
+              <p class="dt-status-text" [class.dt-status-text--ok]="_scanState() === 'success' && !_isFetchingShipment()">
+                {{ _isFetchingShipment() ? 'พบ ' + (_reportLocation?.type === 'VEHICLE' ? 'รถ' : 'Dock') + ': ' + _reportLocation?.label + ' — กำลังค้นหา Shipment...' : (_scanState() === 'success' ? ('พบ ' + (_reportLocation?.type === 'VEHICLE' ? 'รถ' : 'Dock') + ': ' + _reportLocation?.label) : 'Scan รถ') }}
+              </p>
+            </div>
+
+            <div class="table-area" *ngIf="_scanState() === 'table'">
+              <table class="broken-bag-table">
+                <thead>
+                  <tr>
+                    <th class="table-header-left">Grade, Lot</th>
+                    <th class="table-header-center">จำนวนถุง</th>
+                    <th class="table-header-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="table-empty-row" *ngIf="_scannedBags().length === 0">
+                    <td colspan="3">
+                      <mat-icon class="table-empty-icon">qr_code_scanner</mat-icon>
+                      ยังไม่มีถุงที่สแกน — กด "Scan QR Code" เพื่อเริ่มสแกนถุงที่แตก
+                    </td>
+                  </tr>
+                  <tr class="table-row" *ngFor="let bag of _scannedBags(); let i = index">
+                    <td class="table-cell-desc">
+                      <span class="grade-badge">{{ bag.grade }}</span>
+                      <span class="lot-text">Lot {{ bag.lot }}</span>
+                    </td>
+                    <td class="table-cell-qty">
+                      <span class="bag-qty-badge" [class.bag-qty-badge--pending]="bag.qty === 'None'">
+                        {{ bag.qty === 'None' ? 'ยังไม่ระบุ' : (bag.qty + ' ถุง') }}
+                      </span>
+                    </td>
+                    <td class="table-cell-actions">
+                      <button class="btn-action-blue" *ngIf="bag.qty === 'None'" (click)="openQtyKeypad(i)">
+                        <mat-icon>add_circle</mat-icon> ใส่จำนวนถุง
+                      </button>
+                      <button class="btn-action-yellow" *ngIf="bag.qty !== 'None'" (click)="openQtyKeypad(i)">
+                        <mat-icon>edit</mat-icon> แก้ไขจำนวนถุง
+                      </button>
+                      <button type="button" class="icon-delete-btn" (click)="removeBag(i)" title="ลบถุงนี้">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="scan-modal-footer">
+            <button class="btn-cancel" (click)="closeModal()">ยกเลิก</button>
+            <button class="btn-confirm-red" *ngIf="_scanState() === 'table'" (click)="confirmBrokenBag()">แจ้งเปลี่ยนถุงแตก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: เปลี่ยนของกับ Warehouse (สแกนถุงแบบเดียวกับหน้า /scan-pallet) -->
+  <div class="modal custom-modal-overlay" tabindex="-1" [class.show]="_whShowModal()">
+    <div class="modal-dialog modal-dialog-centered wh-modal-dialog">
+      <div class="modal-content wh-modal-content">
+        <div class="modal-body wh-modal-body">
+
+          <!-- ช่องรับค่าจากเครื่องสแกน (ซ่อนไว้) — โฟกัสอัตโนมัติระหว่างเปิด modal -->
+          <input #whScannerInput type="text" class="wh-hidden-scanner" [(ngModel)]="_whScannerValue"
+            (keyup.enter)="onWhScannerEnter()" autocomplete="off" autocorrect="off" autocapitalize="off"
+            spellcheck="false" inputmode="none" />
+
+          <div class="wh-modal-header">
+            <div class="wh-modal-titles">
+              <h4 class="wh-modal-title">เปลี่ยนถุงแตก {{ _whJob()?.systemNo }}</h4>
+              <p class="wh-modal-subtitle">Grade : <strong>{{ _whJobGrade() }}</strong> &bull; Lot : <strong>{{ _whJobLot() }}</strong></p>
+            </div>
+            <button class="wh-modal-close" (click)="closeWhModal()" aria-label="ปิด">X</button>
+          </div>
+
+          <div class="wh-modal-countbar">
+            <span class="wh-count-label">ถุงเสียหายทั้งหมด</span>
+            <span class="wh-count-badge">{{ _whScannedBags().length }} / {{ _whTargetCount() }} bags</span>
+          </div>
+
+          <div class="wh-bag-list">
+            <div class="wh-bag-empty" *ngIf="_whScannedBags().length === 0">
+              -- ยังไม่มีถุงที่สแกน --
+            </div>
+
+            <div class="wh-bag-row" *ngFor="let bag of _whScannedBags(); let i = index">
+              <span class="wh-bag-desc">
+                <strong>Bag#{{ bag.no }}</strong>&nbsp;&nbsp;Grade : <strong>{{ bag.grade }}</strong> - Lot : <strong>{{ bag.lot }}</strong> - QTY : <strong>{{ bag.qty }}</strong>
+              </span>
+
+              <mat-form-field appearance="fill" class="wh-bag-reason-field">
+                <mat-select placeholder="เหตุผล" [(ngModel)]="bag.reason">
+                  <mat-option *ngFor="let reason of _whReasonOptions" [value]="reason">{{ reason }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-icon class="wh-bag-delete" (click)="removeWhBag(i)">delete</mat-icon>
+            </div>
+          </div>
+
+          <div class="wh-scan-toggle-row">
+            <mat-slide-toggle class="wh-manual-toggle" [(ngModel)]="_whManualMode"
+              (change)="onWhToggleManual($event.checked)">
+              พิมพ์
+            </mat-slide-toggle>
+          </div>
+
+          <!-- โหมดสแกน -->
+          <div class="wh-scan-actions" *ngIf="!_whManualMode">
+            <button type="button" class="wh-scan-qr-btn" [class.scanning]="_whIsScanning()" (click)="onWhScanBtnClick()">
+              <mat-icon>qr_code_scanner</mat-icon>
+              {{ _whIsScanning() ? 'กำลังสแกน...' : 'กรุณากดปุ่มเพื่อสแกน' }}
+            </button>
+            <button type="button" class="wh-scan-clear-btn" (click)="onWhClearScan()" title="ล้างรายการถุงที่สแกน">X</button>
+          </div>
+
+          <!-- โหมดพิมพ์เอง -->
+          <div class="wh-manual-row" *ngIf="_whManualMode">
+            <input type="text" class="wh-manual-input" [(ngModel)]="_whManualValue"
+              placeholder="พิมพ์รหัสถุง เช่น 1234|GRADE|LOT|01|001"
+              (keyup.enter)="onWhSubmitManual()" autocomplete="off" />
+            <button type="button" class="wh-manual-submit" (click)="onWhSubmitManual()">ยืนยัน</button>
+          </div>
+
+          <p class="wh-modal-note">*Grade และจำนวนถุงต้องตรงกับใบงานเท่านั้น</p>
+
+          <div class="wh-modal-footer">
+            <button class="btn-cancel" (click)="closeWhModal()" [disabled]="_isSubmittingWhReplace">ยกเลิก</button>
+            <button class="wh-btn-submit" [disabled]="!canSubmitWhReplace() || _isSubmittingWhReplace" (click)="confirmWhReplace()">
+              {{ _isSubmittingWhReplace ? 'กำลังบันทึก...' : 'Submit (' + _whScannedBags().length + ' / ' + _whTargetCount() + ')' }}
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: นำของขึ้นรถ (สแกน 1 ถุง + สแกนรถ — concept เดียวกับหน้า /load-to-truck) -->
+  <div class="modal custom-modal-overlay" tabindex="-1" [class.show]="_loadShowModal()">
+    <div class="modal-dialog modal-dialog-centered scan-modal-dialog">
+      <div class="modal-content scan-modal-content">
+        <div class="modal-body scan-modal-body">
+          <input #loadModalScannerInput type="text" class="wh-hidden-scanner" [(ngModel)]="_loadScannerValue"
+            (keyup.enter)="onLoadScannerEnter()" autocomplete="off" autocorrect="off" autocapitalize="off"
+            spellcheck="false" inputmode="none" />
+
+          <div class="scan-modal-header">
+            <div class="scan-modal-titles">
+              <h4 class="scan-modal-title">นำของขึ้นรถ {{ _loadJob()?.systemNo }}</h4>
+              <p class="scan-modal-subtitle">
+                {{ _loadStep() === 'bag' ? 'Scan ถุงที่เปลี่ยนแล้ว Grade ' + _loadJobGrade() + ' Lot ' + _loadJobLot() : 'Scan QR รถเพื่อนำถุงขึ้นรถ' }}
+              </p>
+            </div>
+            <div class="scan-modal-header-actions">
+              <mat-slide-toggle class="wh-manual-toggle" [(ngModel)]="_loadManualMode" (change)="onLoadToggleManual($event.checked)">
+                พิมพ์
+              </mat-slide-toggle>
+              <button class="btn-yellow" [class.scanning]="_loadIsScanning()" *ngIf="!_loadManualMode" (click)="onLoadScanBtnClick()">
+                <mat-icon>qr_code_scanner</mat-icon>
+                {{ _loadIsScanning() ? 'กำลังสแกน...' : 'Scan QR Code' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="wh-manual-row" *ngIf="_loadManualMode">
+            <input type="text" class="wh-manual-input" [(ngModel)]="_loadManualValue"
+              [placeholder]="_loadStep() === 'bag' ? 'พิมพ์รหัสถุง เช่น 1234|GRADE|LOT|01|001' : 'พิมพ์รหัส QR รถ'"
+              (keyup.enter)="onLoadSubmitManual()" autocomplete="off" />
+            <button type="button" class="wh-manual-submit" (click)="onLoadSubmitManual()">ยืนยัน</button>
+          </div>
+
+          <div class="modal-inner-container">
+            <!-- Step "bag": list ถุงที่ต้องเช็คของใบงานนี้ (replaceItems) — เช็คแล้วเปลี่ยน label เป็นเขียว ต้องครบก่อนถึงไปสแกนรถได้ -->
+            <ng-container *ngIf="_loadStep() === 'bag'">
+              <div class="wh-modal-countbar">
+                <span class="wh-count-label">ถุงที่ต้องเช็ค</span>
+                <span class="wh-count-badge">{{ _loadScannedBags().length }} / {{ _loadTargetCount() }} ถุง</span>
+              </div>
+              <div class="wh-bag-list">
+                <div class="wh-bag-empty" *ngIf="_loadTargetBags().length === 0">
+                  -- ไม่มีถุงที่ต้องเช็ค --
+                </div>
+                <div class="wh-bag-row" *ngFor="let item of _loadTargetBags()">
+                  <span class="wh-bag-desc">
+                    <strong>ถุง#{{ item.no }}</strong>&nbsp;&nbsp;Grade : <strong>{{ item.grade }}</strong> - Lot : <strong>{{ item.lot }}</strong>
+                  </span>
+                  <span class="bag-qty-badge" [class.bag-qty-badge--pending]="!item.checked">
+                    {{ item.checked ? 'เช็คแล้ว' : 'ยังไม่สแกน' }}
+                  </span>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Step "truck": ไอคอน/สถานะสแกน (แนวทางเดียวกับ modal เพิ่มแจ้งเปลี่ยนถุงแตก) -->
+            <div class="scan-area" *ngIf="_loadStep() === 'truck'">
+              <div class="dt-icon-stage">
+                <span class="dt-icon-ring" *ngIf="_loadIsScanning() || _isSubmittingLoad"></span>
+                <span class="dt-icon-ring dt-icon-ring--delay" *ngIf="_loadIsScanning() || _isSubmittingLoad"></span>
+                <div class="dt-icon-circle" [class.dt-icon-circle--ok]="!_isSubmittingLoad">
+                  <span class="dt-icon-glyph">&#10003;</span>
+                </div>
+              </div>
+              <p class="dt-status-text" [class.dt-status-text--ok]="!_isSubmittingLoad">
+                {{ _isSubmittingLoad ? 'กำลังบันทึก...' : 'สแกนครบ ' + _loadScannedBags().length + ' ถุงแล้ว — Scan QR รถ' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="scan-modal-footer">
+            <button class="btn-cancel" (click)="closeLoadModal()" [disabled]="_isSubmittingLoad">ยกเลิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: คีย์แพดตัวเลข ใส่/แก้ไขจำนวนถุง — ปิด keyboard ของระบบ ใช้ปุ่มกดเอง (เหมาะกับ tablet) -->
+  <div class="modal custom-modal-overlay" tabindex="-1" [class.show]="_qtyKeypadShowModal()">
+    <div class="modal-dialog modal-dialog-centered qty-keypad-dialog">
+      <div class="modal-content qty-keypad-content">
+        <div class="modal-body qty-keypad-body">
+          <h4 class="qty-keypad-title">จำนวนถุง</h4>
+          <div class="qty-keypad-display">{{ _qtyKeypadValue() || '0' }}</div>
+
+          <div class="qty-keypad-grid">
+            <button type="button" class="qty-keypad-btn" *ngFor="let d of ['1','2','3','4','5','6','7','8','9']" (click)="onQtyKeypadDigit(d)">{{ d }}</button>
+            <button type="button" class="qty-keypad-btn qty-keypad-btn--action" (click)="onQtyKeypadClear()">C</button>
+            <button type="button" class="qty-keypad-btn" (click)="onQtyKeypadDigit('0')">0</button>
+            <button type="button" class="qty-keypad-btn qty-keypad-btn--action" (click)="onQtyKeypadBackspace()">
+              <mat-icon>backspace</mat-icon>
+            </button>
+          </div>
+
+          <div class="scan-modal-footer">
+            <button class="btn-cancel" (click)="closeQtyKeypad()">ยกเลิก</button>
+            <button class="btn-confirm-red" [disabled]="!_qtyKeypadValue()" (click)="confirmQtyKeypad()">บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

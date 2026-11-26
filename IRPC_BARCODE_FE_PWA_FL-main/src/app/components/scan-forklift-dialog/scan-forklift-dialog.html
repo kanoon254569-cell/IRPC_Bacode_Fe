@@ -1,0 +1,50 @@
+<div class="fl-gate">
+  <div class="fl-tag" [class.fl-tag--error]="_status === 'error'" [class.fl-tag--success]="_status === 'success'">
+
+    <div class="fl-head">
+      <span class="fl-eyebrow">Forklift check-in</span>
+      <mat-slide-toggle class="fl-mode-toggle" [(ngModel)]="_isManualInputMode"
+        (change)="onToggleManualInputMode($event.checked)">
+        Manual
+      </mat-slide-toggle>
+    </div>
+
+    <h2 class="fl-title">สแกน QR Code รถ Forklift</h2>
+    <p class="fl-sub">{{ _isManualInputMode ? 'พิมพ์รหัสรถ Forklift แล้วกดยืนยัน' : 'วาง QR ตรงกล้อง แล้วกดปุ่มเพื่อสแกน' }}</p>
+
+    <!-- ช่องรับค่าจากเครื่องสแกน (ซ่อนไว้เสมอ ไม่ขึ้นกับโหมด กันโฟกัสหลุดตอนสลับโหมด) -->
+    <input #scannerInput type="text" class="fl-hidden-input" [(ngModel)]="_scannerValue" (keyup.enter)="onScannerEnter()"
+      (blur)="onInputBlur()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" />
+
+    <!-- ไอคอนรถ Forklift ในวงกลม + วงแหวนสแกนตอนกำลังรอ (โชว์เสมอไม่ว่าจะอยู่โหมดไหน) -->
+    <div class="fl-icon-stage">
+      <span class="fl-icon-ring" *ngIf="_isScanning && _status === 'idle'"></span>
+      <span class="fl-icon-ring fl-icon-ring--delay" *ngIf="_isScanning && _status === 'idle'"></span>
+
+      <div class="fl-icon-circle" [class.fl-icon-circle--ok]="_status === 'success'" [class.fl-icon-circle--err]="_status === 'error'">
+        <img *ngIf="_status === 'idle'" src="assets/images/forklift-1.png" alt="" class="fl-icon" />
+        <span *ngIf="_status === 'success'" class="fl-icon-glyph">&#10003;</span>
+        <span *ngIf="_status === 'error'" class="fl-icon-glyph">!</span>
+      </div>
+    </div>
+
+    <button type="button" class="fl-scan-button" [class.scanning]="_isScanning" (click)="onClickScanButton()">
+      {{ _isScanning ? 'Scanning…' : 'Press to scan' }}
+    </button>
+
+    <!-- Manual Mode: เพิ่มช่องพิมพ์เองต่อท้ายด้านล่างปุ่มสแกน -->
+    <div class="fl-manual-row" *ngIf="_isManualInputMode">
+      <input type="text" class="fl-manual-input" [(ngModel)]="_manualInputValue" placeholder="001|FL-01"
+        (keyup.enter)="onClickSubmitManualInput()" autocomplete="off" />
+      <button type="button" class="fl-manual-submit" (click)="onClickSubmitManualInput()">Enter</button>
+    </div>
+
+    <div class="fl-status-slot">
+      <p class="fl-chip fl-chip--error" *ngIf="_status === 'error'">{{ _errorMessage }}</p>
+      <p class="fl-chip fl-chip--success" *ngIf="_status === 'success'">รถ Forklift {{ _lastCode?.name }} · รหัส {{ _lastCode?.id }}</p>
+    </div>
+
+    <!-- ทางออกกลับไป login ใหม่ (เช่น เข้าผิด account) -> เคลียร์ session ที่เพิ่ง login ไว้แล้วกลับไปหน้า login -->
+    <button type="button" class="fl-cancel-link" (click)="onClickCancel()">ยกเลิก</button>
+  </div>
+</div>

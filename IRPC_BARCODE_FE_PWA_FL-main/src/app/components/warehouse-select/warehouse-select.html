@@ -1,0 +1,22 @@
+<div class="warehouse-select-container">
+  <app-header></app-header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="header-section">
+      <h1 class="page-title">เลือก Warehouse</h1>
+      <p class="page-subtitle">เลือก Warehouse เพื่อดำเนินการต่อ</p>
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="warehouse-grid">
+      <div class="grid-col" *ngFor="let wh of warehouses()">
+        <button class="warehouse-card" (click)="selectWarehouse(wh)">
+          <img src="assets/images/WareHouse.png" alt="Warehouse Icon" class="warehouse-icon" fetchpriority="high">
+          <span class="warehouse-name">{{ wh }}</span>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+

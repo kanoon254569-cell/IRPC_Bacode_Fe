@@ -1,0 +1,479 @@
+<div class="pallet-management-container">
+  <app-header [forkliftId]="forkliftIdNumber()" [selectedWarehouse]="selectedWarehouse()"></app-header>
+
+  <section class="control-bar">
+    <div class="control-left-section">
+      <button class="back-wh-btn" (click)="onBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="title-headers">
+        <h1 class="page-title">Pallet Management</h1>
+        <p class="page-subtitle">จัดการ Pallet และย้ายของเข้าออก pallet</p>
+      </div>
+    </div>
+  </section>
+
+  <main class="main-content">
+    <mat-grid-list cols="12" rowHeight="fit" class="scan-grid">
+      <!-- LEFT COLUMN -->
+      <mat-grid-tile [colspan]="5">
+        <div class="tile-content">
+          
+          <div class="info-card flex-grow-card">
+            <div class="card-title border-bottom-header">ข้อมูล Pallet</div>
+            <!-- ค้นหาด้วย QR ถุง หรือ Pallet No. (พิมพ์เอง หรือยิงเครื่องสแกนลงช่องนี้ได้) -->
+            <div class="pallet-search-bar border-bottom-header">
+              <input type="text" class="pallet-search-input" placeholder="QR ถุง / Pallet No."
+                     [value]="_searchCode" (input)="_searchCode = $any($event.target).value"
+                     (keyup.enter)="onSearchPallet()" autocomplete="off">
+              <button class="search-btn" (click)="onSearchPallet()" title="ค้นหา">
+                <mat-icon>search</mat-icon> ค้นหา
+              </button>
+              <button class="refresh-btn" [disabled]="!_searchCode.trim() && !_isPalletScanned()" (click)="onRefreshPallet()" title="Refresh">
+                <mat-icon>refresh</mat-icon> Refresh
+              </button>
+            </div>
+            <div class="card-body">
+              <ng-container *ngIf="!_isPalletScanned(); else palletDataView">
+                <div class="empty-state-full">
+                  <img src="assets/images/empty-pallet.png" alt="empty-pallet" class="empty-icon-fallback">
+                  <div class="empty-title">ยังไม่ได้ Scan Pallet</div>
+                  <div class="empty-subtitle">Scan Pallet ได้ที่ปุ่ม Scan QR Code</div>
+                </div>
+              </ng-container>
+              <ng-template #palletDataView>
+                <div class="data-block">
+                <div class="icon-box pallet-bg">
+                  <img src="assets/images/pallet.png" alt="Pallet" class="large-img-icon">
+                </div>
+                <div class="details-box">
+                  <div class="detail-row"><span class="label">Pallet Number : </span><span class="value">{{ _palletData().number }}</span>
+                    <span class="dummy-badge" *ngIf="_isDummyPallet()">Dummy</span></div>
+                  <div class="detail-row key-row"><span class="label">เกรด : </span><span class="value">{{ _palletData().grade }}</span></div>
+                  <div class="detail-row key-row"><span class="label">ล๊อต : </span><span class="value">{{ _palletData().lot }}</span></div>
+                  <div class="detail-row key-row"><span class="label">น้ำหนัก (กก.) : </span><span class="value">{{ _palletData().qty }}</span></div>
+                </div>
+              </div>
+              <div class="action-buttons">
+                <!-- Dummy Pallet: เบิกของรายถุงจาก Auto / Manual / Dummy อื่น (ดู _isDummyPallet) -->
+                <button class="action-btn bg-green" (click)="openAddBagModal()"><mat-icon>add</mat-icon> เพิ่มถุง</button>
+                <!-- Dummy Pallet เท่านั้น: ปลด + ปิดใช้งานถุงทั้งหมด แล้วพาเลทกลับ Bagging Area -->
+                <button class="action-btn bg-brown" *ngIf="_isDummyPallet()" (click)="onClearDummyPallet()"><mat-icon>layers_clear</mat-icon> ล้างพาเลท</button>
+              </div>
+              <!-- Bag Section -->
+              <div class="data-block">
+                <div class="icon-box bag-bg">
+                  <img src="assets/images/Bags.png" alt="Bag" class="large-img-icon">
+                </div>
+                <div class="details-box details-box-grid">
+                  <div class="detail-row key-row"><span class="label">Cost Center : </span><span class="value">{{ _bagData().costCenter }}</span></div>
+                  <div class="detail-row key-row"><span class="label">เกรด : </span><span class="value">{{ _bagData().grade }}</span></div>
+                  <div class="detail-row key-row"><span class="label">ล๊อต : </span><span class="value">{{ _bagData().lot }}</span></div>
+                  <div class="detail-row key-row"><span class="label">ถุงที่ : </span><span class="value">{{ _bagData().runningNum }}</span></div>
+                  <div class="detail-row key-row"><span class="label">ตันที่ : </span><span class="value">{{ _bagData().tonNo }}</span></div>
+                  <div class="detail-row key-row"><span class="label">น้ำหนัก (กก.) : </span><span class="value">{{ _bagData().qty }}</span></div>
+                  <div class="detail-row qr-row"><span class="label">QR : </span><span class="value qr-value">{{ _bagData().qrText }}</span></div>
+                </div>
+              </div>
+              <div class="action-buttons trio-buttons">
+                <!-- ลำดับปุ่ม: Edit, Replace, Reject (ดีดออก = เลื่อนถุง), Remove (ดึงออก = ไม่เลื่อนถุง) -->
+                <!-- ถุงบน Dummy ที่เบิกจากพาเลท Manual (ไม่มี QR ข้างถุง) จัดการรายถุงไม่ได้ (ดู _isSelectedBagLocked) -->
+                <button class="action-btn bg-yellow" [disabled]="!_bagData().id || _isSelectedBagLocked()" (click)="openEditBagModal()"><mat-icon>edit</mat-icon> แก้ไข</button>
+                <button class="action-btn bg-purple" [disabled]="!_bagData().id || _isSelectedBagLocked()" (click)="openReplaceModal()"><mat-icon>swap_horiz</mat-icon> สลับ</button>
+                <button class="action-btn bg-orange" [disabled]="!_bagData().id || _isSelectedBagLocked()" (click)="onRejectBag()"><mat-icon>block</mat-icon> ดีดออก</button>
+                <button class="action-btn bg-red" [disabled]="!_bagData().id || _isSelectedBagLocked()" (click)="onRemoveBag()"><mat-icon>delete</mat-icon> ดึงออก</button>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+          <!-- Scanner: รูปแบบเดียวกับหน้า scan-pallet (ช่องซ่อน + ปุ่มสแกน + toggle พิมพ์) -->
+          <div class="info-card spaced-card mt-auto scan-action-card">
+            <div class="card-title border-bottom-header scan-card-header">
+              <span>Scan QR ถุง / Pallet</span>
+              <div class="scan-mode-toggles">
+                <!-- กล้อง: ปุ่มสแกนทุกจุดในหน้านี้ (หน้าหลัก / เพิ่มถุง / สลับ) เปิดกล้องแทน -- จำค่าไว้ในเครื่อง -->
+                <mat-slide-toggle class="manual-mode-toggle" [checked]="_isCameraMode()"
+                  (change)="onToggleCameraMode($event.checked)">
+                  กล้อง
+                </mat-slide-toggle>
+                <mat-slide-toggle class="manual-mode-toggle" [checked]="_isManualInputMode()"
+                  (change)="onToggleManualInputMode($event.checked)">
+                  พิมพ์
+                </mat-slide-toggle>
+              </div>
+            </div>
+            <div class="scan-action-body">
+              <!-- Hidden Scanner Input -->
+              <input #_scanInput type="text" class="hidden-scanner-field"
+                (keyup.enter)="onScannerEnter(_scanInput)" (blur)="onScannerBlur($event, 'main')"
+                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" />
+
+              <!-- Scan Mode -->
+              <div class="scan-actions" *ngIf="!_isManualInputMode()">
+                <button type="button" class="scan-qr-button" *ngIf="!_isCameraMode()" [class.scanning]="_isScanning()" (click)="onMainScanButton()">
+                  <img src="assets/images/qr-code.png" alt="qr-code-icon">
+                  {{ _isScanning() ? 'กำลังสแกน...' : 'กรุณากดปุ่มเพื่อสแกน' }}
+                </button>
+                <button type="button" class="scan-qr-button camera-mode" *ngIf="_isCameraMode()" (click)="onMainScanButton()">
+                  <mat-icon>photo_camera</mat-icon>
+                  แตะเพื่อเปิดกล้องสแกน
+                </button>
+              </div>
+
+              <!-- Manual Input Mode -->
+              <div class="scan-actions" *ngIf="_isManualInputMode()">
+                <input #_manualInput type="text" class="manual-input-field"
+                  placeholder="พิมพ์ QR ถุง (costCenter|grade|lot|bagNo|tonNo) หรือ Pallet No."
+                  (keyup.enter)="onSubmitManualInput(_manualInput)" autocomplete="off" />
+                <button type="button" class="manual-input-submit" (click)="onSubmitManualInput(_manualInput)">ยืนยัน</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </mat-grid-tile>
+
+      <!-- RIGHT COLUMN -->
+      <mat-grid-tile [colspan]="7">
+        <div class="tile-content right-col-pad">
+          <div class="info-card flex-grow-card right-card-container">
+            <div class="card-title border-bottom-header">Bag List : <strong>&nbsp;{{ _isPalletScanned() ? _bagsList().length : 0 }} Bags</strong></div>
+            
+            <ng-container *ngIf="!_isPalletScanned(); else bagsDataView">
+              <div class="empty-state-full">
+                <img src="assets/images/empty-pallet.png" alt="empty-pallet" class="empty-icon-fallback">
+                <div class="empty-title">ยังไม่ได้ Scan Pallet</div>
+                <div class="empty-subtitle">Scan Pallet ได้ที่ปุ่ม Scan QR Code</div>
+              </div>
+            </ng-container>
+            <ng-template #bagsDataView>
+              <!-- พาเลทไม่มีถุง (เช่น Dummy Pallet เปล่าที่ยังไม่ได้ใช้เบิก) -->
+              <div class="empty-state-full" *ngIf="_bagsList().length === 0">
+                <img src="assets/images/empty-pallet.png" alt="empty-pallet" class="empty-icon-fallback">
+                <div class="empty-title">ไม่มีถุงบนพาเลทนี้</div>
+                <div class="empty-subtitle">{{ _palletData().number }}</div>
+              </div>
+              <div class="bag-list-scroll">
+                <div class="bag-item" *ngFor="let bag of _bagsList(); let i = index" [attr.data-bag-index]="i"
+                     [class.selected-bag]="i === _selectedBagIndex()" 
+                     (click)="selectBag(i)">
+                <div class="bag-icon-container"><span class="bag-no-badge">{{ formatRunningNo(bag.bag_no) }}</span></div>
+                <div class="bag-text">
+                  <!-- ลำดับ: ตันที่, Cost center, เกรด, ล๊อต (เลขถุงแสดงในกล่องด้านซ้ายแล้ว) -->
+                  <div class="bag-main-line">
+                    <span class="bag-field key-field"><span class="bag-label">ตันที่</span> <strong>{{ bagTonNo(bag) }}</strong></span>
+                    <span class="bag-field key-field"><span class="bag-label">Cost center</span> <strong>{{ bag.cost_center || '-' }}</strong></span>
+                    <span class="bag-field key-field"><span class="bag-label">เกรด</span> <strong>{{ bag.grade || '-' }}</strong></span>
+                    <span class="bag-field key-field"><span class="bag-label">ล๊อต</span> <strong>{{ bag.lot || '-' }}</strong></span>
+                  </div>
+                  <div class="bag-qr-text">QR : {{ bag.qr_text_data || '-' }}</div>
+                </div>
+              </div>
+            </div>
+            </ng-template>
+          </div>
+        </div>
+      </mat-grid-tile>
+    </mat-grid-list>
+  </main>
+
+</div>
+
+<!-- ========================================= -->
+<!-- REPLACE MODAL                             -->
+<!-- ========================================= -->
+<div class="custom-modal-overlay" [class.show]="_showReplaceModal()">
+  <div class="replace-modal-dialog">
+    <div class="replace-modal-content">
+      <div class="replace-modal-header">
+        <h4>สลับถุง</h4>
+        <button class="btn-close-icon" (click)="closeReplaceModal()">
+          <strong>X</strong>
+        </button>
+      </div>
+      
+      <div class="replace-modal-body">
+        <!-- ซ้าย = ถุงเดิม | กลาง = ลูกศร | ขวา = ถุงใหม่ -->
+        <div class="replace-columns">
+          <!-- LEFT: ถุงเดิม (ถุงที่เลือกบนพาเลท) -->
+          <div class="replace-col replace-col--old">
+            <div class="replace-col-title">ถุงเดิม</div>
+            <div class="data-block">
+              <div class="icon-box bag-bg">
+                <img src="assets/images/Bags.png" alt="Bag" class="large-img-icon">
+              </div>
+              <div class="details-box">
+                <div class="detail-row"><span class="label">Cost Center : </span><span class="value">{{ _bagData().costCenter }}</span></div>
+                <div class="detail-row"><span class="label">เกรด : </span><span class="value">{{ _bagData().grade }}</span></div>
+                <div class="detail-row"><span class="label">ล๊อต : </span><span class="value">{{ _bagData().lot }}</span></div>
+                <div class="detail-row"><span class="label">ถุงที่ : </span><span class="value">{{ _bagData().runningNum }}</span></div>
+                <div class="detail-row"><span class="label">ตันที่ : </span><span class="value">{{ _bagData().tonNo }}</span></div>
+                  <div class="detail-row"><span class="label">QR : </span><span class="value qr-value">{{ _bagData().qrText }}</span></div>
+                <div class="detail-row"><span class="label">น้ำหนัก (กก.) : </span><span class="value">{{ _bagData().qty }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Swap Arrow -->
+          <div class="swap-icon-container swap-icon-container--horizontal">
+            <mat-icon>arrow_forward</mat-icon>
+            <mat-icon>arrow_back</mat-icon>
+          </div>
+
+          <!-- RIGHT: ถุงใหม่ -- concept เดียวกับ เพิ่มถุง: สแกนก่อน (scanner arm เองตอนเปิด modal)
+               สแกนไม่ได้ค่อยกางฟอร์มกรอกเอง -->
+          <div class="replace-col replace-col--new">
+            <div class="replace-col-title">ถุงใหม่</div>
+            <button type="button" class="scan-qr-button add-scan-btn replace-scan-btn" *ngIf="!_isCameraMode()" [class.scanning]="_isReplaceScanning()" (click)="onReplaceScanButton()">
+              <img src="assets/images/qr-code.png" alt="qr-code-icon">
+              {{ _isReplaceScanning() ? 'พร้อมสแกนถุงใหม่...' : 'แตะเพื่อสแกนถุงใหม่' }}
+            </button>
+            <button type="button" class="scan-qr-button add-scan-btn replace-scan-btn camera-mode" *ngIf="_isCameraMode()" (click)="onReplaceScanButton()">
+              <mat-icon>photo_camera</mat-icon>
+              แตะเพื่อเปิดกล้องสแกนถุงใหม่
+            </button>
+
+            <div class="scan-prompt-box" *ngIf="!_replaceScannedBag()">
+              สแกน QR ถุงใหม่ที่จะนำมาสลับ
+            </div>
+
+            <!-- ถุงที่พบ (หลังสแกน/ค้นหาสำเร็จ) -->
+            <div class="data-block" *ngIf="_replaceScannedBag() as nb">
+              <div class="icon-box bag-bg-replace">
+                <img src="assets/images/Bags.png" alt="Bag" class="large-img-icon">
+              </div>
+              <div class="details-box">
+                <div class="detail-row"><span class="label">Cost Center : </span><span class="value">{{ nb.cost_center || '-' }}</span></div>
+                <div class="detail-row"><span class="label">เกรด : </span><span class="value">{{ nb.grade }}</span></div>
+                <div class="detail-row"><span class="label">ล๊อต : </span><span class="value">{{ nb.lot }}</span></div>
+                <div class="detail-row"><span class="label">ถุงที่ : </span><span class="value">{{ formatRunningNo(nb.bag_no) }}</span></div>
+                <div class="detail-row"><span class="label">ตันที่ : </span><span class="value">{{ formatTonNo(nb.pallet_running_no) }}</span></div>
+                <div class="detail-row"><span class="label">QR : </span><span class="value qr-value">{{ nb.qr_text_data || '-' }}</span></div>
+                <div class="detail-row"><span class="label">น้ำหนัก (กก.) : </span><span class="value">{{ nb.qty }}</span></div>
+                <!-- ถุงจากพาเลทอื่น -> สลับที่กัน ถุงเดิมจะย้ายไปพาเลทนั้น -->
+                <div class="add-queue-from" *ngIf="nb.pallet_no">อยู่บนพาเลท {{ nb.pallet_no }} -- ถุงเดิมจะย้ายไปพาเลทนี้แทน</div>
+              </div>
+            </div>
+
+            <!-- ฟอร์มกรอกเองพับไว้ก่อน เหมือน modal เพิ่มถุง -->
+            <button type="button" class="add-manual-toggle" (click)="_showReplaceManual.set(!_showReplaceManual())">
+              <span>กรอกข้อมูลถุงเอง (กรณีสแกนไม่ได้)</span>
+              <mat-icon>{{ _showReplaceManual() ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
+            <div class="add-bag-form replace-manual-form" *ngIf="_showReplaceManual()">
+              <div class="bag-key-grid">
+                <div class="form-group">
+                  <label>Cost Center <span class="req">*</span></label>
+                  <input type="text" inputmode="numeric" maxlength="4" placeholder="เช่น 1312" [value]="_replaceManualForm().costCenter" (input)="onReplaceFormInput('costCenter', $any($event.target).value)">
+                </div>
+                <div class="form-group">
+                  <label>เกรด <span class="req">*</span></label>
+                  <input type="text" [value]="_replaceManualForm().grade" (input)="onReplaceFormInput('grade', $any($event.target).value)">
+                </div>
+                <div class="form-group">
+                  <label>ล๊อต <span class="req">*</span></label>
+                  <input type="text" [value]="_replaceManualForm().lot" (input)="onReplaceFormInput('lot', $any($event.target).value)">
+                </div>
+                <div class="form-group">
+                  <label>ถุงที่ <span class="req">*</span></label>
+                  <input type="text" inputmode="numeric" maxlength="2" placeholder="เช่น 01" [value]="_replaceManualForm().bagNo" (input)="onReplaceFormInput('bagNo', $any($event.target).value)">
+                </div>
+                <div class="form-group">
+                  <label>ตันที่ (Running Pallet No.) <span class="req">*</span></label>
+                  <input type="text" inputmode="numeric" maxlength="3" placeholder="เช่น 001" [value]="_replaceManualForm().tonNo" (input)="onReplaceFormInput('tonNo', $any($event.target).value)">
+                </div>
+              </div>
+              <button class="btn-gray-cancel replace-search-btn" *ngIf="!_replaceScannedBag()" (click)="onReplaceManualSearch()">ค้นหาถุง</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden input for replace scan -->
+        <input #_replaceScanInput type="text" class="hidden-scanner-field"
+          (keyup.enter)="processReplaceScan(_replaceScanInput.value, _replaceScanInput)" (blur)="onScannerBlur($event, 'replace')"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" tabindex="-1">
+
+        <!-- Actions -->
+        <div class="replace-actions">
+          <button class="btn-replace-confirm" 
+                  [disabled]="!_replaceScannedBag()" 
+                  [class.ready]="_replaceScannedBag()" 
+                  (click)="onConfirmReplace()">Replace</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!-- ADD BAG MODAL                             -->
+<!-- ========================================= -->
+<div class="custom-modal-overlay" [class.show]="_showAddBagModal()">
+  <div class="replace-modal-dialog">
+    <div class="replace-modal-content">
+      <div class="replace-modal-header">
+        <h4>{{ _isEditBagMode() ? 'แก้ไขถุง' : 'เพิ่มถุง' }}</h4>
+        <button class="btn-close-icon" (click)="closeAddBagModal()">
+          <strong>X</strong>
+        </button>
+      </div>
+      
+      <div class="add-bag-modal-body">
+        <!-- Add Bag: สแกนถุงต่อเนื่องทีละใบ (scanner arm เอง ไม่ต้องกดปุ่ม) -> เข้ารายการรอ -> กดยืนยัน -->
+        <input #_addScanInput type="text" class="hidden-scanner-field"
+          (keyup.enter)="processAddScan(_addScanInput.value, _addScanInput)" (blur)="onScannerBlur($event, 'add')"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" tabindex="-1">
+
+        <ng-container *ngIf="!_isEditBagMode()">
+          <div class="add-queue-summary">
+            <div>
+              <span class="add-queue-label">พาเลท</span>
+              <strong>{{ _palletData().number }}</strong>
+              <span class="add-queue-sep">|</span>
+              <span class="add-queue-label">เกรด</span> <strong>{{ _palletData().grade }}</strong>
+              <span class="add-queue-sep">|</span>
+              <span class="add-queue-label">ล๊อต</span> <strong>{{ _palletData().lot }}</strong>
+            </div>
+            <div class="add-queue-count" [class.full]="_isAddFull()">
+              {{ _addTotalCount() }} / {{ _palletCapacity() > 0 ? _palletCapacity() : '-' }} ถุง
+              <span class="add-queue-label">(บนพาเลท {{ _bagsList().length }} + สแกนใหม่ {{ _addQueue().length }})</span>
+            </div>
+          </div>
+
+          <button type="button" class="scan-qr-button add-scan-btn" *ngIf="!_isCameraMode()" [class.scanning]="_isAddScanning()"
+                  [disabled]="_isAddFull()" (click)="onAddScanButton()">
+            <img src="assets/images/qr-code.png" alt="qr-code-icon">
+            {{ _isAddFull() ? 'พาเลทเต็มแล้ว (ครบ Pallet Ratio)' : (_isAddScanning() ? 'พร้อมสแกนถุงถัดไป...' : 'แตะเพื่อสแกนถุงต่อ') }}
+          </button>
+          <button type="button" class="scan-qr-button add-scan-btn camera-mode" *ngIf="_isCameraMode()"
+                  [disabled]="_isAddFull()" (click)="onAddScanButton()">
+            <mat-icon>photo_camera</mat-icon>
+            {{ _isAddFull() ? 'พาเลทเต็มแล้ว (ครบ Pallet Ratio)' : 'แตะเพื่อเปิดกล้องสแกนถุง (ต่อเนื่อง)' }}
+          </button>
+
+          <div class="add-queue-list">
+            <div class="add-queue-empty" *ngIf="_addQueue().length === 0">
+              <ng-container *ngIf="!_isDummyPallet(); else dummyAddHint">ยังไม่มีถุงที่สแกน -- สแกน QR ถุง หรือ QR พาเลท (ย้ายถุงทั้งพาเลท) ได้เลย</ng-container>
+              <ng-template #dummyAddHint>
+                ยังไม่มีถุงที่สแกน -- ถุงที่มี QR ข้างถุง (พาเลท Auto) สแกนทุกใบ
+                / ของจากพาเลท Manual หรือ Dummy อื่นที่ไม่มี QR ข้างถุง สแกน QR พาเลทแล้วกรอกจำนวนถุง -- Grade / Lot ต้องตรงกัน
+              </ng-template>
+            </div>
+            <!-- รูปแบบเดียวกับ Bag List: กล่องเลขถุง | ตันที่, Cost center, เกรด, ล๊อต + QR -->
+            <div class="add-queue-item" *ngFor="let qb of _addQueue(); let i = index">
+              <div class="bag-icon-container"><span class="bag-no-badge">{{ formatRunningNo(qb.bag_no) }}</span></div>
+              <div class="bag-text add-queue-text">
+                <div class="bag-main-line">
+                  <span class="bag-field key-field"><span class="bag-label">ตันที่</span> <strong>{{ formatTonNo(qb.pallet_running_no) }}</strong></span>
+                  <span class="bag-field key-field"><span class="bag-label">Cost center</span> <strong>{{ qb.cost_center || '-' }}</strong></span>
+                  <span class="bag-field key-field"><span class="bag-label">เกรด</span> <strong>{{ qb.grade || '-' }}</strong></span>
+                  <span class="bag-field key-field"><span class="bag-label">ล๊อต</span> <strong>{{ qb.lot || '-' }}</strong></span>
+                </div>
+                <div class="bag-qr-text">QR : {{ qb.qr_text_data || '-' }}</div>
+                <div class="add-queue-from" *ngIf="qb.fromPalletNo">ย้ายจากพาเลท {{ qb.fromPalletNo }}</div>
+              </div>
+              <button type="button" class="add-queue-remove" (click)="removeQueuedBag(i)" title="เอาออกจากรายการ">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- ฟอร์มกรอกเองพับไว้ก่อน ให้รายการถุงที่สแกนมีพื้นที่แสดงเต็มที่ -->
+          <button type="button" class="add-manual-toggle" (click)="_showAddManual.set(!_showAddManual())">
+            <span>กรอกข้อมูลถุงเอง (กรณีสแกนไม่ได้)</span>
+            <mat-icon>{{ _showAddManual() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+        </ng-container>
+
+        <div class="add-bag-form" *ngIf="_isEditBagMode() || _showAddManual()">
+          <div class="bag-key-grid">
+            <div class="form-group">
+              <label>Cost Center <span class="req">*</span></label>
+              <input type="text" inputmode="numeric" maxlength="4" placeholder="เช่น 1312" [value]="_addBagForm().costCenter" (input)="onAddFormInput('costCenter', $any($event.target).value)">
+            </div>
+            <div class="form-group">
+              <label>เกรด <span class="req">*</span></label>
+              <input type="text" [value]="_addBagForm().grade" (input)="onAddFormInput('grade', $any($event.target).value)">
+            </div>
+            <div class="form-group">
+              <label>ล๊อต <span class="req">*</span></label>
+              <input type="text" [value]="_addBagForm().lot" (input)="onAddFormInput('lot', $any($event.target).value)">
+            </div>
+            <div class="form-group">
+              <label>ถุงที่ <span class="req">*</span></label>
+              <input type="text" inputmode="numeric" maxlength="2" placeholder="เช่น 01" [value]="_addBagForm().bagNo" (input)="onAddFormInput('bagNo', $any($event.target).value)">
+            </div>
+            <div class="form-group">
+              <label>ตันที่ (Running Pallet No.) <span class="req">*</span></label>
+              <input type="text" inputmode="numeric" maxlength="3" placeholder="เช่น 001" [value]="_addBagForm().tonNo" (input)="onAddFormInput('tonNo', $any($event.target).value)">
+            </div>
+          </div>
+          <button type="button" class="btn-gray-cancel add-manual-btn" *ngIf="!_isEditBagMode()"
+                  [disabled]="_isAddFull()" (click)="onAddManualToQueue()">เพิ่มเข้ารายการ</button>
+        </div>
+
+        <div class="add-bag-actions">
+          <button class="btn-gray-cancel" (click)="closeAddBagModal()">ยกเลิก</button>
+          <button class="btn-green-save" *ngIf="_isEditBagMode()" (click)="saveEditBag()">บันทึก</button>
+          <button class="btn-green-save" *ngIf="!_isEditBagMode()" [disabled]="_addQueue().length === 0"
+                  (click)="confirmAddBags()">ยืนยัน ({{ _addQueue().length }} ถุง)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!-- CAMERA SCAN OVERLAY (toggle "กล้อง")      -->
+<!-- ========================================= -->
+<div class="camera-overlay" *ngIf="_cameraTarget() as camTarget">
+  <div class="camera-dialog">
+    <div class="replace-modal-header">
+      <h4>{{ cameraTitle(camTarget) }}</h4>
+      <button class="btn-close-icon" (click)="closeCamera()">
+        <strong>X</strong>
+      </button>
+    </div>
+
+    <div class="camera-view">
+      <div class="camera-placeholder-msg" *ngIf="!_hasCamera()">
+        <mat-icon>photo_camera</mat-icon>
+        <span>กำลังเปิดกล้อง..</span>
+      </div>
+      <zxing-scanner
+        [class.camera-hidden]="!_hasCamera()"
+        [enable]="true"
+        [autofocusEnabled]="true"
+        [device]="_cameraDevice()"
+        [formats]="cameraFormats"
+        (camerasFound)="onCamerasFound($event)"
+        (camerasNotFound)="onCamerasNotFound()"
+        (permissionResponse)="!$event && onCamerasNotFound()"
+        (scanSuccess)="onCameraScan($event)"
+      ></zxing-scanner>
+      <div class="camera-frame" *ngIf="_hasCamera()"></div>
+      <div class="camera-busy" *ngIf="_cameraBusy()">
+        <mat-spinner diameter="48"></mat-spinner>
+        <span>กำลังตรวจสอบ...</span>
+      </div>
+    </div>
+
+    <div class="camera-footer">
+      <ng-container *ngIf="camTarget === 'add'; else singleScanHint">
+        <div class="camera-footer-info">
+          <div>
+            <strong>{{ _addTotalCount() }} / {{ _palletCapacity() > 0 ? _palletCapacity() : '-' }} ถุง</strong>
+            <span class="add-queue-label">(สแกนใหม่ {{ _addQueue().length }} ถุง)</span>
+          </div>
+          <div class="camera-last-result" *ngIf="_cameraLastResult() as r" [class.ok]="r.ok" [class.fail]="!r.ok">{{ r.text }}</div>
+        </div>
+        <button type="button" class="btn-green-save" (click)="closeCamera()">เสร็จสิ้น</button>
+      </ng-container>
+      <ng-template #singleScanHint>
+        <div class="camera-footer-info">หันกล้องไปที่ QR Code ให้อยู่ในกรอบ</div>
+        <button type="button" class="btn-gray-cancel" (click)="closeCamera()">ยกเลิก</button>
+      </ng-template>
+    </div>
+  </div>
+</div>

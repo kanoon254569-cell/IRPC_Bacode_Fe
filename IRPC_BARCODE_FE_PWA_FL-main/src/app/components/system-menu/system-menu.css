@@ -1,0 +1,225 @@
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+}
+
+.system-menu-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #f4f5f8;
+  overflow: hidden;
+}
+
+/* Main Body Content */
+.main-content {
+  flex-grow: 1;
+  padding: 48px 48px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: #f8f9fa;
+  overflow-y: auto;
+}
+
+/* Back / Re-select Warehouse Button */
+.back-btn-container {
+  position: absolute;
+  top: 8px;
+  left: -8px;
+  padding-left: 24px;
+}
+
+button.back-wh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 54px;
+  min-width: 100px;
+  border-radius: 8px;
+  background-color: #F8C538;
+  color: #000000;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+button.back-wh-btn mat-icon {
+  margin: 0;
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+button.back-wh-btn:active {
+  background-color: #b58209;
+  transform: scale(0.96);
+}
+
+button.back-wh-btn:focus-visible {
+  outline: 5px solid rgba(248, 197, 56, 0.4);
+  outline-offset: 3px;
+}
+
+/* Headings */
+.menu-headings-section {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.page-title {
+  font-size: 42px;
+  color: #000000;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  font-size: 22px;
+  font-weight: 500;
+  color: #5a5a5a;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* Cards Grid Layout */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  justify-content: center;
+  align-items: stretch;
+  flex-grow: 1;
+  max-height: 480px;
+}
+
+.menu-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 10px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 6px 23px rgba(0, 0, 0, 0.04);
+  border: 2px solid rgba(0, 0, 0, 0.05);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s ease, background-color 0.22s ease;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  height: 320px;
+  animation: card-pop-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/*  gimmick: การ์ดเด้งเข้ามาทีละใบเรียงกันตอนเปิดหน้า (stagger ตามลำดับเมนู) */
+.menu-grid .menu-card:nth-child(1) { animation-delay: 0.05s; }
+.menu-grid .menu-card:nth-child(2) { animation-delay: 0.13s; }
+.menu-grid .menu-card:nth-child(3) { animation-delay: 0.21s; }
+.menu-grid .menu-card:nth-child(4) { animation-delay: 0.29s; }
+.menu-grid .menu-card:nth-child(n+5) { animation-delay: 0.29s; }
+
+/*  gimmick: แสงปาดเฉียงวิ่งผ่านการ์ดตอน hover เหมือนแสงสะท้อนบัตร */
+.menu-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  transition: left 0.65s ease;
+}
+
+.menu-card:hover:not(.menu-card-disabled)::before {
+  left: 130%;
+}
+
+.menu-card:active {
+  transform: scale(0.97);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+  background-color: #f1f3f5;
+}
+
+.menu-card:focus-visible {
+  outline: 5px solid var(--bs-primary);
+  outline-offset: 6px;
+}
+
+.menu-card-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+}
+
+.menu-card-disabled:active {
+  transform: none;
+  box-shadow: 0 6px 23px rgba(0, 0, 0, 0.04);
+  background-color: #f8f9fa;
+}
+
+.menu-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 115px;
+  width: 100%;
+  margin-top: 12px;
+  margin-bottom: 30px;
+}
+
+.menu-icon {
+  max-height: 115px;
+  max-width: 115px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.menu-icon.report-broken-bag-icon {
+  transform: scale(1.7);
+}
+
+/* card text */
+.menu-card-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #212529;
+  margin-bottom: 8px;
+}
+
+.menu-card-desc {
+  font-size: 20px;
+  font-weight: 500;
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+@keyframes card-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-card {
+    animation: none;
+  }
+
+  .menu-card::before {
+    display: none;
+  }
+}
