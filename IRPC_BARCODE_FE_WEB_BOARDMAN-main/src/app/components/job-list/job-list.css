@@ -2785,6 +2785,100 @@
   gap: 8px;
 }
 
+@media (max-width: 1200px), (max-height: 820px) {
+  .job-list-container:not(.job-list-loading) {
+    height: auto;
+    max-height: max(180px, calc(100vh - 300px));
+  }
+
+  .job-list-card {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) minmax(100px, auto);
+    grid-template-areas:
+      "icon system actions"
+      "progress progress progress"
+      "location location location";
+    gap: 12px;
+  }
+
+  .job-list-card > *:not(:first-child):not(:last-child) {
+    margin-right: 0;
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .job-list-card > .job-icon {
+    grid-area: icon;
+    width: auto;
+    margin-right: 0;
+  }
+
+  .job-list-card > .system-info {
+    grid-area: system;
+    width: auto;
+    min-width: 0;
+  }
+
+  .job-list-card > .grade-lot-progress {
+    grid-area: progress;
+    min-width: 0;
+  }
+
+  .job-list-card > .location {
+    grid-area: location;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .job-list-card .get-location,
+  .job-list-card .put-location {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: 10px;
+  }
+
+  .job-list-card > .job-card-actions {
+    grid-area: actions;
+    min-width: 100px;
+  }
+
+  .job-pagination {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  ::ng-deep .job-pagination .mat-mdc-paginator-container {
+    justify-content: center;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .internal-transfer-empty-state,
+  .transfer-wh-empty-state {
+    height: auto;
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .job-list-card {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "icon system actions"
+      "progress progress progress"
+      "location location location";
+  }
+
+  .job-list-card > .location {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+}
+
 /*  width: 0 + min-width: 100% keeps the tag row from widening the column,
     so it always spans exactly the Inspect button's width. */
 .product-tags {

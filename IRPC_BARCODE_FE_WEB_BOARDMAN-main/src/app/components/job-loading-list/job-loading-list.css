@@ -4,7 +4,7 @@
 /* All 5 filters + buttons on one row (job-list.css wraps them). Columns
    share the width from a 0 basis: Shipment No, DO No and วันที่ are the
    same width. */
-@media (min-width: 992px) {
+@media (min-width: 1200px) {
   .search-filter-row {
     flex-wrap: nowrap;
   }

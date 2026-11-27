@@ -5,6 +5,13 @@
   min-height: 360px;
 }
 
+@media (max-width: 1200px), (max-height: 820px) {
+  .internal-transfer-empty-state {
+    height: auto;
+    min-height: 220px;
+  }
+}
+
 /*  Same ct_job_status palette as job-list.css's own .badge .pending/
     .wh-approved/.in-progress/.complete/.mapping-do/.cancelled -- WH02's
     job_status_name values ("Complete", "WH Approved", ...) come from the

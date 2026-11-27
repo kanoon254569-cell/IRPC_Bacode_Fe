@@ -5,6 +5,13 @@
   min-height: 360px;
 }
 
+@media (max-width: 1200px), (max-height: 820px) {
+  .transfer-wh-empty-state {
+    height: auto;
+    min-height: 220px;
+  }
+}
+
 /*  Keep "IT-TW-20260005" on one line -- in the 18%-wide .system-info next to
     the status badge it otherwise breaks at the hyphen. */
 .system-header .data-no .system-no {
